@@ -9,7 +9,7 @@ from termcolor import colored
 __all__ = ['init_logger', 'info', 'error', 'warn', 'debug', 'exception']
 
 
-logger = logging.getLogger("MCS")
+logger = logging.getLogger("gateway")
 
 
 def info(msg, *args, **kwargs):

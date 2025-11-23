@@ -1,5 +1,5 @@
 [project]
-name = "tmp_python_service"
+name = "gateway"
 version = "0.2.0"
 description = "Add your description here"
 readme = "README.md"
@@ -18,7 +18,7 @@ core = [
 
 [dependency-groups]
 dev = [
-    "tmp_python_service[core]",
+    "gateway[core]",
     "ruff>=0.14.6",
     "pytest>=9.0.1",
     "pyright>=1.1.407",

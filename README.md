@@ -1,12 +1,11 @@
-## Template Python Service
-###  An Easy way to create a Python Service
+# Gateway
 
 # Usage
 
 1. Clone the repository
 ```shell
-git clone https://app.git.valerii.cc/valerii/tmp-python-service.git
-cd tmp-python-service
+git clone https://app.git.valerii.cc/valerii/gateway.git
+cd gateway
 ```
 
 ## Baremetal

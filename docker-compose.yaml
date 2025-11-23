@@ -1,6 +1,6 @@
 services:
   core:
-    image: app.git.valerii.cc/valerii/tmp-python-service:latest
+    image: app.git.valerii.cc/valerii/gateway:latest
     container_name: core
     restart: unless-stopped
     tty: false
