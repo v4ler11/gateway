@@ -6,11 +6,15 @@ import uvicorn
 from core.app import App
 from core.globals import LOGS_DIR, PORT
 from core.logger import init_logger, info
+from models.read_config import read_config
 
 
 def main():
     init_logger(LOGS_DIR)
     info("Logger initialized")
+
+    config = read_config()
+    print(config)
 
     app = App.new()
 

@@ -10,6 +10,7 @@ dependencies = []
 core = [
     "fastapi>=0.121.3",
     "pydantic>=2.12.4",
+    "pyyaml>=6.0.3",
     "scalar-fastapi>=1.4.4",
     "termcolor>=3.2.0",
     "uvicorn>=0.38.0",
@@ -27,10 +28,12 @@ dev = [
 [tool.uv.workspace]
 members = [
     "src/core",
+    "src/models",
 ]
 
 [tool.uv.sources]
 core = { workspace = true }
+models = { workspace = true }
 
 [tool.uv]
 package = true
