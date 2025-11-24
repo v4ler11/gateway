@@ -29,11 +29,13 @@ dev = [
 members = [
     "src/core",
     "src/models",
+    "src/inf_llm",
 ]
 
 [tool.uv.sources]
 core = { workspace = true }
 models = { workspace = true }
+inf_llm = { workspace = true }
 
 [tool.uv]
 package = true
