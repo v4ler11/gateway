@@ -45,7 +45,7 @@ class ModelRecordBase(BaseModel):
 class ModelRecordLlamaCpp(ModelRecordBase):
     model_file: str
     engine_params: EngineParamsLlamacpp
-    urls: URLsLlamaCpp | partial = Field(default=partial(URLsLlamaCpp))
+    urls: URLsLlamaCpp | partial = Field(default=partial(URLsLlamaCpp)) # create constructor now, initialize later
 
     @property
     def context_size(self):

@@ -1,0 +1,82 @@
+import os
+import subprocess
+import time
+from pathlib import Path
+
+from core.globals import MODELS_DIR
+from core.logger import init_logger, info
+from hf.download import download_repo_files
+from inf_llm.llamacpp.globals import LOGS_DIR
+from models.s1_records import ModelRecordLlamaCpp
+from models.s2_from_config.config import Config
+from models.s3_models.models import models_from_config, ModelLocal
+
+
+DEFAULT_ARGS = [
+    "-cb" # continuous batching
+]
+
+
+def get_model() -> ModelLocal:
+    config = Config.read_yaml()
+    models = models_from_config(config, False)
+    models = [m for m in models if isinstance(m.record, ModelRecordLlamaCpp)]
+
+    if not models:
+        raise ValueError("No models found to run")
+    if len(models) > 1:
+        raise ValueError("Multiple models are not supported yet")
+
+    model = models[0]
+    assert isinstance(model, ModelLocal)
+    return model
+
+
+def download_model(model: ModelLocal) -> Path:
+    d_files, err = download_repo_files(
+        model.record.model,
+        MODELS_DIR / model.record.model.replace("/", "_"),
+        [model.record.model_file]
+    )
+    if err is not None:
+        raise ValueError(f"Failed to download model {model.record.model}: {err}")
+
+    model_file = d_files.get(model.record.model_file)
+    if not model_file:
+        raise ValueError(f"Failed to download model {model.record.model}: {err}")
+
+    return model_file
+
+
+def main():
+    init_logger(LOGS_DIR)
+    info("Logger initialized")
+
+    model = get_model()
+
+    model_file = download_model(model)
+
+    cmd = [
+        "/app/llama-server",
+        "-m", str(model_file),
+        *model.engine_params.model_dump_to_args(),
+        "--host", "0.0.0.0",
+        "--host", str(model.config.port),
+        *DEFAULT_ARGS,
+    ]
+    info(f"Starting Llama.cpp with following command:\n{' '.join(cmd)}")
+
+    env = os.environ.copy()
+    process = subprocess.Popen(cmd, env=env)
+
+    try:
+        while True:
+            time.sleep(1)
+            if process.poll() is not None:
+                print("Process has terminated")
+                break
+
+    except KeyboardInterrupt:
+        print("Terminating process...")
+        process.terminate()
+        process.wait()

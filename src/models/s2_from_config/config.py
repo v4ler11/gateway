@@ -26,7 +26,7 @@ class Config(BaseModel):
     models: List[ModelConfigAny]
 
     @classmethod
-    def read(cls) -> "Config":
+    def read_yaml(cls) -> "Config":
         yaml_data = yaml.safe_load(YAML_CONFIG.read_text())
         return Config.from_dict(yaml_data)
 

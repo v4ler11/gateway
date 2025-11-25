@@ -3,12 +3,13 @@ from typing import Literal, Optional
 
 from pydantic import BaseModel, field_validator, Field, model_validator
 
-from models.s1_records.engine_params import EngineParamsAny, EngineParamsLlamacpp
-from models.s1_records.model_record import SamplingParams
+from models.s1_records import EngineParamsAny, SamplingParams
+from models.s1_records.engine_params import EngineParamsLlamacpp
 
 
 class ModelConfig(BaseModel):
     model: str
+    sampling_params: Optional[SamplingParams] = None
 
     @property
     def base_url(self) -> str:
@@ -17,8 +18,7 @@ class ModelConfig(BaseModel):
 
 class ModelConfigLocal(ModelConfig):
     container: str
-    port: int = Field(default=8000, ge=1, le=65535)
-    sampling_params: Optional[SamplingParams] = None
+    port: int = Field(ge=1, le=65535)
     engine_params: Optional[EngineParamsAny] = None
 
     @property

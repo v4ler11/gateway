@@ -1,3 +1,5 @@
+from typing import List
+
 from fastapi import FastAPI
 
 from core.routers.router_base import BaseRouter
@@ -5,19 +7,26 @@ from core.routers.router_base import BaseRouter
 
 __all__ = ["App"]
 
+from core.routers.router_models import ModelsRouter
+
+from models.s3_models.models import ModelAny
+
 
 class App(FastAPI):
     def __init__(
             self,
+            models: List[ModelAny],
             *args, **kwargs
     ):
         super().__init__(*args, **kwargs)
+        self.models = models
         self.add_event_handler("startup", self._startup_events)
         self.add_event_handler("shutdown", self._shutdown_events)
 
     @classmethod
-    def new(cls) -> "App":
+    def new(cls, models: List[ModelAny]) -> "App":
         return cls(
+            models=models,
             docs_url=None,
             redoc_url=None,
             openapi_url="/v1/openapi.json",
@@ -34,4 +43,5 @@ class App(FastAPI):
     def _routers(self):
         return [
             BaseRouter(),
+            ModelsRouter(models=self.models)
         ]

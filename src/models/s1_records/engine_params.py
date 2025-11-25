@@ -5,9 +5,6 @@ from pydantic import BaseModel
 from models.utils import snake_to_kebab
 
 
-type EngineParamsAny = EngineParamsLlamacpp
-
-
 class EngineParamsBase(BaseModel):
     def model_dump(self, **kwargs) -> Dict[str, Any]:
         data = super().model_dump(**kwargs)
