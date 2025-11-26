@@ -120,7 +120,14 @@ async def monitor_single_model(
                 next_task,
             )
 
-            if await smart_sleep(stop_event, 5.0):
+            if not model.status.ping_ok:
+                delay = 5.0
+            elif not model.status.request_ok:
+                delay = 5.0
+            else:
+                delay = 30.
+
+            if await smart_sleep(stop_event, delay):
                 info(f"MODEL {model.record.resolve_name}: Stop signal received. Exiting loop.")
                 break
 

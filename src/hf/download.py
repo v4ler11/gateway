@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import List, Optional, Tuple, Dict
 
 from huggingface_hub import hf_hub_download
-from core.logger import warn
+from core.logger import warn, info
 
 
 def download_repo_files(
@@ -32,6 +32,7 @@ def download_repo_files(
 
         with tempfile.TemporaryDirectory() as temp_dir:
             for filename in files_to_download:
+                info(f"Downloading {filename} from {repo_id}")
                 temp_path = hf_hub_download(
                     repo_id=repo_id,
                     filename=filename,

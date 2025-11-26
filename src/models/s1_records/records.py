@@ -16,10 +16,19 @@ RECORDS: List[ModelRecordAny] = [
         tokenizer="openai/gpt-oss-20b",
         sampling_params=SamplingParams(
             max_tokens=8096,
+            temperature=1.0,
         ),
         model_file="gpt-oss-20b-F16.gguf",
         engine_params=EngineParamsLlamacpp(
             ctx_size=64_000,
+            args=[
+                "--threads", "16",
+                "--n-gpu-layers", "99",
+                "--reasoning-format", "deepseek",
+                "-fa", "on", # flash attention kernels
+                "-cb", # continuous batching
+                "--jinja",
+            ]
         ),
     ),
     ModelRecordLMStudio(

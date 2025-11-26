@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from starlette import status
 
 from core.routers.router_base import BaseRouter
+from core.routers.schemas import ErrorResponse, error_constructor
 from models.s3_models.models import ModelAny
 from models.s3_models.status import Status
 
@@ -18,6 +19,7 @@ class ModelResponse(BaseModel):
 
 class ModelsResponse(BaseModel):
     object: Literal["list"] = "list"
+    data: List[ModelResponse]
 
 
 class ModelsRouter(BaseRouter):
@@ -38,16 +40,29 @@ class ModelsRouter(BaseRouter):
                 200: dict(
                     description="Returns a list of models",
                     model=ModelsResponse
-                )
+                ),
+                500: dict(
+                    description="Internal server error",
+                    model=ErrorResponse,
+                ),
             }
         )
 
     async def _models(self):
-        return [
-            ModelResponse(
-                id=m.record.resolve_name,
-                created=int(time.time()),
-                status=m.status,
+        try:
+            return ModelsResponse(
+                data=[
+                    ModelResponse(
+                        id=m.record.resolve_name,
+                        created=int(time.time()),
+                        status=m.status,
+                    )
+                    for m in self.models
+                ]
             )
-            for m in self.models
-        ]
+        except Exception as e:
+            return error_constructor(
+                message=f"Internal server error: {str(e)}",
+                error_type="internal_server_error",
+                status_code=500
+            )

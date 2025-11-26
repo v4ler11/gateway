@@ -12,11 +12,6 @@ from models.s2_from_config.config import Config
 from models.s3_models.models import models_from_config, ModelLocal
 
 
-DEFAULT_ARGS = [
-    "-cb" # continuous batching
-]
-
-
 def get_model() -> ModelLocal:
     config = Config.read_yaml()
     models = models_from_config(config, False)
@@ -53,16 +48,17 @@ def main():
     info("Logger initialized")
 
     model = get_model()
+    print(1)
 
     model_file = download_model(model)
+    print(2)
 
     cmd = [
         "/app/llama-server",
         "-m", str(model_file),
         *model.engine_params.model_dump_to_args(),
         "--host", "0.0.0.0",
-        "--host", str(model.config.port),
-        *DEFAULT_ARGS,
+        "--port", str(model.config.port),
     ]
     info(f"Starting Llama.cpp with following command:\n{' '.join(cmd)}")
 

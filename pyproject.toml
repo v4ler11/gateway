@@ -20,6 +20,7 @@ core = [
     "safetensors>=0.7.0",
     "uvicorn>=0.38.0",
     "uvloop>=0.22.1",
+    "ujson>=5.11.0",
 ]
 
 inf_llamacpp = [

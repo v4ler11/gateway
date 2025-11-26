@@ -1,29 +1,19 @@
-from typing import List, Any, Dict
+from typing import List, Optional
 
 from pydantic import BaseModel
 
-from models.utils import snake_to_kebab
-
 
 class EngineParamsBase(BaseModel):
-    def model_dump(self, **kwargs) -> Dict[str, Any]:
-        data = super().model_dump(**kwargs)
-        converted = {snake_to_kebab(key): value for key, value in data.items()}
-
-        if kwargs.get('exclude_none'):
-            return {k: v for k, v in converted.items() if v is not None}
-        return converted
+    args: Optional[List[str]] = None
 
     def model_dump_to_args(self) -> List[str]:
-        params = self.model_dump(exclude_none=True)
-        args = []
-        for k, v in params.items():
-            if k in ['enable-prefix-caching', 'enable-chunked-prefill']:
-                if str(v).lower() == 'true':
-                    args.append(f"--{k}")
-            else:
-                args.extend([f"--{k}", str(v)])
+        args =  [
+            "-c", str(self.context_size),
+        ]
+        if self.args:
+            args.extend(self.args)
         return args
+
 
     @property
     def context_size(self) -> int:
@@ -32,7 +22,6 @@ class EngineParamsBase(BaseModel):
 
 class EngineParamsLlamacpp(EngineParamsBase):
     ctx_size: int
-    n_gpu_layers: int = 999 # GPU only
 
     @property
     def context_size(self) -> int:

@@ -12,7 +12,7 @@ class SamplingParams(BaseModel):
     max_tokens: int = Field(gt=0, default=4096)
     temperature: float = Field(ge=0.0, default=0.6)
     top_p: Optional[float] = Field(gt=0.0, le=1.0, default=None)
-    top_k: Optional[int] = Field(gt=0, default=None)
+    top_k: Optional[float] = Field(ge=0.0, default=None)
     min_p: Optional[float] = Field(ge=0.0, le=1.0, default=None)
     presence_penalty: Optional[float] = Field(ge=-2.0, le=2.0, default=None)
 

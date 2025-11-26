@@ -1,15 +1,17 @@
 from typing import List
 
+import aiohttp
+
 from fastapi import FastAPI
 
+from core.routers.oai.router_chat_completions import OAIChatCompletionsRouter
+from core.routers.oai.router_models import OAIModelsRouter
 from core.routers.router_base import BaseRouter
+from core.routers.router_models import ModelsRouter
+from models.s3_models.models import ModelAny
 
 
 __all__ = ["App"]
-
-from core.routers.router_models import ModelsRouter
-
-from models.s3_models.models import ModelAny
 
 
 class App(FastAPI):
@@ -19,6 +21,7 @@ class App(FastAPI):
             *args, **kwargs
     ):
         super().__init__(*args, **kwargs)
+        self.http_session: aiohttp.ClientSession
         self.models = models
         self.add_event_handler("startup", self._startup_events)
         self.add_event_handler("shutdown", self._shutdown_events)
@@ -34,6 +37,8 @@ class App(FastAPI):
         )
 
     async def _startup_events(self):
+        self.http_session = aiohttp.ClientSession()
+
         for router in self._routers():
             self.include_router(router)
 
@@ -43,5 +48,8 @@ class App(FastAPI):
     def _routers(self):
         return [
             BaseRouter(),
-            ModelsRouter(models=self.models)
+            ModelsRouter(models=self.models),
+            # OAI Routers
+            OAIModelsRouter(models=self.models),
+            OAIChatCompletionsRouter(models=self.models, http_session=self.http_session),
         ]
