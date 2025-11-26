@@ -32,6 +32,17 @@ class ChatMessageAssistant(ChatMessageBase):
     role: Literal["assistant"] = "assistant"
     reasoning_content: Optional[str] = None
 
+    @model_serializer
+    def serialize_model(self) -> Dict[str, Any]:
+        data = {
+            "role": self.role,
+        }
+        if self.content is not None:
+            data["content"] = self.content
+        if self.reasoning_content is not None:
+            data["reasoning_content"] = self.reasoning_content
+        return data
+
 
 class _ChatCompletionsResponseChoice(BaseModel):
     index: Optional[int] = 0
@@ -48,6 +59,30 @@ class ChatCompletionsResponseChoiceNonStreaming(_ChatCompletionsResponseChoice):
     tool_calls: List[Any] = field(default_factory=list)
     reasoning_content: Optional[str] = None
 
+    @model_serializer
+    def serialize_model(self) -> Dict[str, Any]:
+        data = {
+            "index": self.index,
+            'message': self.message,
+            "finish_reason": self.finish_reason,
+        }
+        if self.logprobs is not None:
+            data["logprobs"] = self.logprobs
+        if self.refusal is not None:
+            data["refusal"] = self.refusal
+        if self.annotations is not None:
+            data["annotations"] = self.annotations
+        if self.audio is not None:
+            data["audio"] = self.audio
+        if self.function_call is not None:
+            data["function_call"] = self.function_call
+        if self.tool_calls is not None:
+            data["tool_calls"] = self.tool_calls
+        if self.reasoning_content is not None:
+            data["reasoning_content"] = self.reasoning_content
+
+        return data
+
 
 class ChatDelta(BaseModel):
     role: Optional[Literal["assistant"]] = None
@@ -56,17 +91,30 @@ class ChatDelta(BaseModel):
 
     @model_serializer # role should be absent in dict if none
     def serialize_model(self) -> Dict[str, Any]:
-        data = {
-            'content': self.content,
-            'reasoning_content': self.reasoning_content
-        }
-        if self.role:
+        data = {}
+        if self.role is not None:
             data['role'] = self.role
+        if self.content is not None:
+            data['content'] = self.content
+        if self.reasoning_content is not None:
+            data['reasoning_content'] = self.reasoning_content
         return data
 
 
 class ChatCompletionsResponseChoiceStreaming(_ChatCompletionsResponseChoice):
     delta: ChatDelta | Dict
+
+    @model_serializer
+    def serialize_model(self) -> Dict[str, Any]:
+        data = {
+            "index": self.index,
+            "delta": self.delta,
+            "finish_reason": self.finish_reason,
+        }
+        if self.logprobs is not None:
+            data["logprobs"] = self.logprobs
+        return data
+
 
 
 class ChatUsage(BaseModel):
@@ -90,6 +138,10 @@ class ChatTimings(BaseModel):
 
 class _ChatCompletionsResponse(BaseModel):
     id: str
+
+    object: Any
+    choices: Any
+
     created: int
     model: str
     timings: Optional[ChatTimings] = None
@@ -97,6 +149,26 @@ class _ChatCompletionsResponse(BaseModel):
     system_fingerprint: Optional[Any] = None
     prompt_logprobs: Optional[Any] = None
     kv_transfer_params: Optional[Any] = None
+
+    @model_serializer
+    def serialize_model(self) -> Dict[str, Any]:
+        data = {
+            "id": self.id,
+            "object": self.object,
+            "choices": self.choices,
+            "created": self.created,
+            "model": self.model,
+            "system_fingerprint": self.system_fingerprint,
+        }
+        if self.timings is not None:
+            data["timings"] = self.timings
+        if self.service_tier is not None:
+            data["service_tier"] = self.service_tier
+        if self.prompt_logprobs is not None:
+            data["prompt_logprobs"] = self.prompt_logprobs
+        if self.kv_transfer_params is not None:
+            data["kv_transfer_params"] = self.kv_transfer_params
+        return data
 
 
 class ChatCompletionsResponseNotStreaming(_ChatCompletionsResponse):
