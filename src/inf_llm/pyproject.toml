@@ -1,6 +1,0 @@
-[project]
-name = "inf_llm"
-version = "0.1.0"
-description = ""
-requires-python = ">=3.12"
-dependencies = []

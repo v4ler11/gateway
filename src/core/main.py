@@ -6,7 +6,7 @@ import uvicorn
 from core.app import App
 from core.globals import LOGS_DIR, PORT
 from core.logger import init_logger, info
-from core.workers.w_status import spawn_worker as spawn_status_worker
+from core.status.worker import spawn_worker as spawn_status_worker
 from models.definitions import ModelLLMAny
 from models.config import Config, models_from_config
 
@@ -20,9 +20,9 @@ def main():
     print(models)
 
     # todo: temp solution
-    models = [
-        m for m in models if isinstance(m, ModelLLMAny)
-    ]
+    # models = [
+    #     m for m in models if isinstance(m, ModelLLMAny)
+    # ]
 
     w_status = spawn_status_worker(models)
 

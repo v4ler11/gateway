@@ -3,6 +3,8 @@ from llm.models import (
     MODEL_CONFIG_CLASSES as MODEL_CONFIG_CLASSES_LLM,
 )
 from llm.models.models import ModelAny as ModelLLMAny
+from llm.status import task_worker as task_worker_llm
+
 from tts.models import (
     ModelConfigAny as ModelConfigTTSAny,
     MODEL_CONFIG_CLASSES as MODEL_CONFIG_CLASSES_TTS,

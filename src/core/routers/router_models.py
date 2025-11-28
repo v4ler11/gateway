@@ -6,7 +6,7 @@ from starlette import status
 
 from core.routers.router_base import BaseRouter
 from core.routers.schemas import ErrorResponse, error_constructor
-from llm.models.models import ModelAny
+from models.definitions import ModelAny
 from models.status import Status
 
 

@@ -3,13 +3,17 @@ import subprocess
 import time
 from pathlib import Path
 
+from core import BASE_DIR
 from core.globals import MODELS_DIR
 from core.logger import init_logger, info
 from hf.download import download_repo_files
-from inf_llm.llamacpp.globals import LOGS_DIR
 from llm.models import ModelRecordLlamaCpp
 from llm.models.models import ModelLocal
 from models.config import Config, models_from_config
+
+
+LOGS_DIR = BASE_DIR / "data" / "inf_llamacpp" / "logs"
+LOGS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def get_model() -> ModelLocal:

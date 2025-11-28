@@ -39,7 +39,6 @@ dev = [
 members = [
     "src/core",
     "src/models",
-    "src/inf_llm",
     "src/hf",
     "src/llm",
     "src/tts",
@@ -48,7 +47,6 @@ members = [
 [tool.uv.sources]
 core = { workspace = true }
 models = { workspace = true }
-inf_llm = { workspace = true }
 hf = { workspace = true }
 llm = { workspace = true }
 tts = { workspace = true }
@@ -58,7 +56,7 @@ package = true
 
 [project.scripts]
 serve = "core.main:main"
-inf_llamacpp = "inf_llm.llamacpp.main:main"
+inf_llamacpp = "llm.inference.llamacpp:main"
 
 [tool.pytest.ini_options]
 markers = []

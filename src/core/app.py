@@ -8,8 +8,7 @@ from core.routers.oai.router_chat_completions import OAIChatCompletionsRouter
 from core.routers.oai.router_models import OAIModelsRouter
 from core.routers.router_base import BaseRouter
 from core.routers.router_models import ModelsRouter
-from llm.models.models import ModelAny
-
+from models.definitions import ModelAny, ModelLLMAny
 
 __all__ = ["App"]
 
@@ -50,6 +49,11 @@ class App(FastAPI):
             BaseRouter(),
             ModelsRouter(models=self.models),
             # OAI Routers
-            OAIModelsRouter(models=self.models),
-            OAIChatCompletionsRouter(models=self.models, http_session=self.http_session),
+            OAIModelsRouter(
+                models=[m for m in self.models if isinstance(m, ModelLLMAny)]
+            ),
+            OAIChatCompletionsRouter(
+                models=[m for m in self.models if isinstance(m, ModelLLMAny)],
+                http_session=self.http_session
+            ),
         ]
