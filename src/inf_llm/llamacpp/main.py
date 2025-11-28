@@ -8,8 +8,8 @@ from core.logger import init_logger, info
 from hf.download import download_repo_files
 from inf_llm.llamacpp.globals import LOGS_DIR
 from llm.models import ModelRecordLlamaCpp
-from llm.models.models import ModelLocal, models_from_config
-from models.config import Config
+from llm.models.models import ModelLocal
+from models.config import Config, models_from_config
 
 
 def get_model() -> ModelLocal:

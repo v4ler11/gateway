@@ -7,8 +7,8 @@ from core.app import App
 from core.globals import LOGS_DIR, PORT
 from core.logger import init_logger, info
 from core.workers.w_status import spawn_worker as spawn_status_worker
-from llm.models.models import models_from_config
-from models.config import Config
+from models.definitions import ModelLLMAny
+from models.config import Config, models_from_config
 
 
 def main():
@@ -18,6 +18,11 @@ def main():
     config = Config.read_yaml()
     models = models_from_config(config, False)
     print(models)
+
+    # todo: temp solution
+    models = [
+        m for m in models if isinstance(m, ModelLLMAny)
+    ]
 
     w_status = spawn_status_worker(models)
 

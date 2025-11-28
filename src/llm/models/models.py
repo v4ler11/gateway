@@ -1,5 +1,5 @@
 from functools import partial
-from typing import Optional, List, Any
+from typing import Optional, Any
 
 from pydantic import BaseModel, Field, ConfigDict
 from transformers import AutoTokenizer
@@ -12,7 +12,6 @@ from llm.models import (
     ModelConfigLocalAny, ModelConfigRemoteAny, ModelConfigAny
 )
 from llm.models.records import RECORDS
-from models.config import Config
 from models.status import Status
 
 
@@ -123,8 +122,3 @@ def try_resolve_record(c_model: ModelConfigAny, local_only: bool) -> Optional[Mo
 
     else:
         raise ValueError(f"Unknown model type: {type(c_model)}; Expected ModelConfigLocalAny or ModelConfigRemoteAny")
-
-
-def models_from_config(config: Config, local_only: bool) -> List[ModelAny]:
-    models: List[Optional[ModelAny]] = [try_resolve_record(c_model, local_only) for c_model in config.models]
-    return [m for m in models if m is not None]

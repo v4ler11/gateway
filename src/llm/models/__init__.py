@@ -3,6 +3,7 @@ from llm.models.model_config import ModelConfigLocalLlamaCpp, ModelConfigRemoteL
 from llm.models.model_record import ModelRecordLlamaCpp, ModelRecordLMStudio, SamplingParams
 from llm.models.urls import URLsLlamaCpp, URLsLmStudio
 
+
 ModelRecordLocalAny = ModelRecordLlamaCpp
 ModelRecordRemoteAny = ModelRecordLMStudio
 ModelRecordAny = ModelRecordLocalAny | ModelRecordRemoteAny
@@ -17,4 +18,4 @@ ModelConfigLocalAny = ModelConfigLocalLlamaCpp
 ModelConfigRemoteAny = ModelConfigRemoteLmStudio
 ModelConfigAny = ModelConfigLocalAny | ModelConfigRemoteAny
 
-MODEL_CLASSES = [ModelConfigRemoteLmStudio, ModelConfigLocalLlamaCpp]
+MODEL_CONFIG_CLASSES = [ModelConfigRemoteLmStudio, ModelConfigLocalLlamaCpp]

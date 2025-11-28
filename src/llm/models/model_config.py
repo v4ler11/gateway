@@ -1,9 +1,9 @@
 from enum import Enum
-from typing import Literal, Optional
+from typing import Literal, Optional, Any
 
 from pydantic import BaseModel, field_validator, Field, model_validator
 
-from llm.models import EngineParamsAny, SamplingParams
+from llm.models.model_record import SamplingParams
 from llm.models.engine_params import EngineParamsLlamacpp
 
 
@@ -13,13 +13,13 @@ class ModelConfig(BaseModel):
 
     @property
     def base_url(self) -> str:
-        raise NotImplementedError(f"url property not implemented ModelConfig")
+        raise NotImplementedError(f"url property not implemented in ModelConfig")
 
 
 class ModelConfigLocal(ModelConfig):
     container: str
     port: int = Field(ge=1, le=65535)
-    engine_params: Optional[EngineParamsAny] = None
+    engine_params: Optional[Any] = None # child is responsible for validation
 
     @property
     def base_url(self) -> str:
@@ -32,6 +32,7 @@ class ModelLocalBackend(Enum):
 
 class ModelConfigLocalLlamaCpp(ModelConfigLocal):
     backend: ModelLocalBackend
+    engine_params: Optional[EngineParamsLlamacpp] = None
 
     @model_validator(mode='after')
     def validate_backend_compatibility(self):
