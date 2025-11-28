@@ -41,6 +41,8 @@ members = [
     "src/models",
     "src/inf_llm",
     "src/hf",
+    "src/llm",
+    "src/tts",
 ]
 
 [tool.uv.sources]
@@ -48,6 +50,8 @@ core = { workspace = true }
 models = { workspace = true }
 inf_llm = { workspace = true }
 hf = { workspace = true }
+llm = { workspace = true }
+tts = { workspace = true }
 
 [tool.uv]
 package = true

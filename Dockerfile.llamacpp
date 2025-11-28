@@ -24,6 +24,7 @@ RUN ln -s /usr/local/cuda/lib64/stubs/libcuda.so /usr/local/cuda/lib64/stubs/lib
     -DCMAKE_BUILD_TYPE=Release \
     && cmake --build build --config Release -j$(nproc)
 
+RUN git clone https://github.com/remsky/Kokoro-FastAPI.git /build/kokoro-fastapi
 
 FROM nvidia/cuda:13.0.2-runtime-ubuntu24.04
 
@@ -38,6 +39,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-venv \
     curl \
     libgomp1 \
+    espeak-ng \
+    libsndfile1 \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -55,9 +59,10 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PATH="/app/.venv/bin:$PATH" \
     UV_CACHE_DIR=/tmp/uv-cache \
-    LD_LIBRARY_PATH="/app:$LD_LIBRARY_PATH"
+    LD_LIBRARY_PATH="/app:$LD_LIBRARY_PATH" \
+    PYTHONPATH="/app/kokoro-fastapi:$PYTHONPATH"
 
-EXPOSE 8001
+EXPOSE 8001 8002
 
 HEALTHCHECK --interval=60s --timeout=10s --start-period=5s --retries=3 \
   CMD python3 scripts/healthcheck.py || exit 1

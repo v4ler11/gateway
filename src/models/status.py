@@ -7,7 +7,6 @@ from pydantic import BaseModel, PrivateAttr, computed_field
 class Status(BaseModel):
     _ping_ok: bool = PrivateAttr(default=False)
     _request_ok: bool = PrivateAttr(default=False)
-    _first_request_ok: bool = PrivateAttr(default=False)
     _error: Optional[str] = PrivateAttr(default=None)
 
     _lock: Lock = PrivateAttr(default_factory=Lock)
@@ -33,16 +32,6 @@ class Status(BaseModel):
     def request_ok(self, value: bool):
         with self._lock:
             self._request_ok = value
-
-    @property
-    def first_request_ok(self) -> bool:
-        with self._lock:
-            return self._first_request_ok
-
-    @first_request_ok.setter
-    def first_request_ok(self, value: bool):
-        with self._lock:
-            self._first_request_ok = value
 
     @computed_field
     @property

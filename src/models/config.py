@@ -5,7 +5,7 @@ from typing import List, Dict, Any
 from pydantic import BaseModel, ValidationError
 
 from core.globals import YAML_CONFIG
-from models.s2_from_config import ModelConfigAny, MODEL_CLASSES
+from llm.models import ModelConfigAny, MODEL_CLASSES
 
 
 def validate_model_from_config(data: Dict[str, Any]) -> ModelConfigAny:

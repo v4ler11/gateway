@@ -4,7 +4,8 @@ from typing import List, Union, Literal, Optional, Dict, Any
 from pydantic import BaseModel, model_serializer, Field
 
 from core.routers.utils import str_to_streaming
-from models.s1_records import SamplingParams
+from llm.models import SamplingParams
+
 
 type ChatMessage = Union[ChatMessageSystem, ChatMessageUser, ChatMessageAssistant]
 

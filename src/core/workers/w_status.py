@@ -9,8 +9,7 @@ import aiohttp
 
 from core.logger import error, info
 from core.workers.w_abstract import Worker
-from models.s3_models.models import ModelAny
-
+from llm.models.models import ModelAny
 
 STARTUP_TIME: float = 360.
 
@@ -58,7 +57,7 @@ async def task_worker(
                 "model": task.model.record.model,
             }
             async with a_session.post(
-                    task.model.urls.chat_completions,
+                    task.model.urls.generate,
                     json=payload, timeout=aiohttp.ClientTimeout(total=10)
             ) as resp:
                 if resp.status == 200:

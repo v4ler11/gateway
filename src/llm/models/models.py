@@ -6,14 +6,14 @@ from transformers import AutoTokenizer
 
 from core.globals import TOKENIZERS_DIR
 from hf.download import download_repo_files
-from models.s1_records import (
+from llm.models import (
     ModelRecordLocalAny, ModelRecordRemoteAny, URLsLocalAny,
-    URLsRemoteAny, EngineParamsAny, SamplingParams, ModelRecordAny
+    URLsRemoteAny, EngineParamsAny, SamplingParams, ModelRecordAny,
+    ModelConfigLocalAny, ModelConfigRemoteAny, ModelConfigAny
 )
-from models.s1_records.records import RECORDS
-from models.s2_from_config import ModelConfigLocalAny, ModelConfigRemoteAny, ModelConfigAny
-from models.s2_from_config.config import Config
-from models.s3_models.status import Status
+from llm.models.records import RECORDS
+from models.config import Config
+from models.status import Status
 
 
 class ModelBase(BaseModel):

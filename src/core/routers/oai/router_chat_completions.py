@@ -13,7 +13,7 @@ from core.routers.oai.utils import limit_messages
 from core.routers.router_base import BaseRouter
 from core.routers.schemas import error_constructor
 from core.routers.utils import parse_sse_streaming
-from models.s3_models.models import ModelAny
+from llm.models.models import ModelAny
 
 
 __all__ = ["OAIChatCompletionsRouter", "stream_with_chat"]
@@ -28,7 +28,7 @@ async def stream_with_chat(
         raise ValueError(f"post.stream should be True, got post.stream={post.stream}")
 
     async with http_session.post(
-        url=model.urls.chat_completions,
+        url=model.urls.generate,
         json=post.model_dump(),
     ) as response:
         async for chunk in parse_sse_streaming(response.content):
@@ -71,7 +71,7 @@ class OAIChatCompletionsRouter(BaseRouter):
 
             else:
                 async with self.http_session.post(
-                    url=model.urls.chat_completions,
+                    url=model.urls.generate,
                     json=post.model_dump(),
                 ) as response:
                     raw_comp = await response.json()

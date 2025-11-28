@@ -3,7 +3,7 @@ from typing import Iterable, Any, Dict, List
 
 from core.logger import info
 from core.routers.oai.models import ChatMessage, ChatMessageSystem
-from models.s3_models.models import ModelAny
+from llm.models.models import ModelAny
 
 
 def generate_chat_completion_id(prefix: str) -> str:

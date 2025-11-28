@@ -8,7 +8,7 @@ from core.routers.oai.router_chat_completions import OAIChatCompletionsRouter
 from core.routers.oai.router_models import OAIModelsRouter
 from core.routers.router_base import BaseRouter
 from core.routers.router_models import ModelsRouter
-from models.s3_models.models import ModelAny
+from llm.models.models import ModelAny
 
 
 __all__ = ["App"]

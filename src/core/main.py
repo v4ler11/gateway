@@ -7,8 +7,8 @@ from core.app import App
 from core.globals import LOGS_DIR, PORT
 from core.logger import init_logger, info
 from core.workers.w_status import spawn_worker as spawn_status_worker
-from models.s2_from_config.config import Config
-from models.s3_models.models import models_from_config
+from llm.models.models import models_from_config
+from models.config import Config
 
 
 def main():

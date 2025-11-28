@@ -7,9 +7,9 @@ from core.globals import MODELS_DIR
 from core.logger import init_logger, info
 from hf.download import download_repo_files
 from inf_llm.llamacpp.globals import LOGS_DIR
-from models.s1_records import ModelRecordLlamaCpp
-from models.s2_from_config.config import Config
-from models.s3_models.models import models_from_config, ModelLocal
+from llm.models import ModelRecordLlamaCpp
+from llm.models.models import ModelLocal, models_from_config
+from models.config import Config
 
 
 def get_model() -> ModelLocal:

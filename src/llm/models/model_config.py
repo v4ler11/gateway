@@ -3,8 +3,8 @@ from typing import Literal, Optional
 
 from pydantic import BaseModel, field_validator, Field, model_validator
 
-from models.s1_records import EngineParamsAny, SamplingParams
-from models.s1_records.engine_params import EngineParamsLlamacpp
+from llm.models import EngineParamsAny, SamplingParams
+from llm.models.engine_params import EngineParamsLlamacpp
 
 
 class ModelConfig(BaseModel):

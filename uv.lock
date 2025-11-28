@@ -7,7 +7,9 @@ members = [
     "gateway",
     "hf",
     "inf-llm",
+    "llm",
     "models",
+    "tts",
 ]
 
 [[package]]
@@ -527,6 +529,11 @@ sdist = { url = "https://files.pythonhosted.org/packages/72/34/14ca021ce8e5dfedc
 wheels = [
     { url = "https://files.pythonhosted.org/packages/cb/b1/3846dd7f199d53cb17f49cba7e651e9ce294d8497c8c150530ed11865bb8/iniconfig-2.3.0-py3-none-any.whl", hash = "sha256:f631c04d2c48c52b84d0d0549c99ff3859c98df65b3101406327ecc7d53fbf12", size = 7484 },
 ]
+
+[[package]]
+name = "llm"
+version = "0.1.0"
+source = { virtual = "src/llm" }
 
 [[package]]
 name = "models"
@@ -1218,6 +1225,11 @@ sdist = { url = "https://files.pythonhosted.org/packages/dd/70/d42a739e8dfde3d92
 wheels = [
     { url = "https://files.pythonhosted.org/packages/6a/6b/2f416568b3c4c91c96e5a365d164f8a4a4a88030aa8ab4644181fdadce97/transformers-4.57.3-py3-none-any.whl", hash = "sha256:c77d353a4851b1880191603d36acb313411d3577f6e2897814f333841f7003f4", size = 11993463 },
 ]
+
+[[package]]
+name = "tts"
+version = "0.1.0"
+source = { virtual = "src/tts" }
 
 [[package]]
 name = "typing-extensions"

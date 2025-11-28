@@ -3,8 +3,8 @@ from typing import Optional
 
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 
-from models.s1_records.engine_params import EngineParamsLlamacpp
-from models.s1_records.urls import URLsLlamaCpp, URLsLmStudio
+from llm.models.engine_params import EngineParamsLlamacpp
+from llm.models.urls import URLsLlamaCpp, URLsLmStudio
 from models.utils import validate_huggingface_path
 
 
