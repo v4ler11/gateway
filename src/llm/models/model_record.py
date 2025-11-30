@@ -1,5 +1,5 @@
 from functools import partial
-from typing import Optional
+from typing import Optional, List
 
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 
@@ -22,6 +22,8 @@ class ModelRecordBase(BaseModel):
 
     model: str
     resolve_name: str
+    caps: List[str] = ["text-generation"]
+
     tokenizer: str
     sampling_params: SamplingParams
 

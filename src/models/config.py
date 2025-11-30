@@ -55,15 +55,15 @@ class Config(BaseModel):
         )
 
 
-def models_from_config(config: Config, local_only: bool) -> List[ModelAny]:
+def models_from_config(config: Config) -> List[ModelAny]:
     records = []
 
     for model in config.models:
         if isinstance(model, ModelConfigLLMAny):
-            if record := try_resolve_record_llm(model, local_only):
-                records.append(record)
+            record = try_resolve_record_llm(model)
+            records.append(record)
 
-        if isinstance(model, ModelConfigTTSAny):
+        elif isinstance(model, ModelConfigTTSAny):
             record = try_resolve_record_tts(model)
             records.append(record)
 

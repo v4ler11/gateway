@@ -12,6 +12,7 @@ from models.status import Status
 
 class ModelResponse(BaseModel):
     id: str
+    caps: List[str]
     object: Literal["model"] = "model"
     created: int
     status: Status
@@ -54,6 +55,7 @@ class ModelsRouter(BaseRouter):
                 data=[
                     ModelResponse(
                         id=m.record.resolve_name,
+                        caps=m.record.caps,
                         created=int(time.time()),
                         status=m.status,
                     )

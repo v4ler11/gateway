@@ -8,7 +8,9 @@ import aiohttp
 from core.logger import error, info
 from core.status.models import TaskType, Task
 from core.abstract import Worker
-from models.definitions import ModelAny, ModelLLMAny, ModelTTSAny, task_worker_llm
+from models.definitions import ModelAny, ModelLLMAny, ModelTTSAny
+from llm.status import task_worker as task_worker_llm
+from tts.status import task_worker as task_worker_tts
 
 
 async def smart_sleep(stop_event: threading.Event, delay: float) -> bool:
@@ -73,7 +75,7 @@ async def _async_entrypoint(models: List[ModelAny], stop_event: threading.Event)
                 task_worker = task_worker_llm
 
             elif isinstance(model, ModelTTSAny):
-                raise NotImplementedError # todo: implement me!
+                task_worker = task_worker_tts
 
             else:
                 raise ValueError(f"Unknown model type: {type(model)}")

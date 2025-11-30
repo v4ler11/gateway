@@ -4,11 +4,14 @@ import aiohttp
 
 from fastapi import FastAPI
 
+from core.routers.oai.router_audio import OAIAudioRouter
 from core.routers.oai.router_chat_completions import OAIChatCompletionsRouter
 from core.routers.oai.router_models import OAIModelsRouter
 from core.routers.router_base import BaseRouter
 from core.routers.router_models import ModelsRouter
 from models.definitions import ModelAny, ModelLLMAny
+from models.definitions import ModelTTSAny
+
 
 __all__ = ["App"]
 
@@ -56,4 +59,8 @@ class App(FastAPI):
                 models=[m for m in self.models if isinstance(m, ModelLLMAny)],
                 http_session=self.http_session
             ),
+            OAIAudioRouter(
+                models=[m for m in self.models if isinstance(m, ModelTTSAny)],
+                http_session=self.http_session
+            )
         ]

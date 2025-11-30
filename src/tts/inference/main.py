@@ -1,13 +1,16 @@
 import asyncio
 
-import uvloop
 import uvicorn
+import uvloop
 
-from core.app import App
-from core.globals import LOGS_DIR, PORT
+from core import BASE_DIR
 from core.logger import init_logger, info
-from core.status.worker import spawn_worker as spawn_status_worker
 from models.config import Config, models_from_config
+from models.definitions import ModelTTSAny
+from tts.inference.app import App
+
+
+LOGS_DIR = BASE_DIR / "data" / "tts" / "logs"
 
 
 def main():
@@ -17,7 +20,9 @@ def main():
     config = Config.read_yaml()
     models = models_from_config(config)
 
-    w_status = spawn_status_worker(models)
+    models = [m for m in models if isinstance(m, ModelTTSAny)]
+    if len(models) > 1:
+        raise RuntimeError("More than one TTS model is not supported")
 
     app = App.new(models)
 
@@ -26,13 +31,11 @@ def main():
     config = uvicorn.Config(
         app,
         host="0.0.0.0",
-        port=PORT,
+        port=models[0].config.port,
         timeout_keep_alive=600,
         log_config=None
     )
     server = uvicorn.Server(config)
     server.run()
-
-    w_status.stop_event.set()
 
     exit(0)

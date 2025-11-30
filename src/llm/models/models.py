@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field, ConfigDict
 from transformers import AutoTokenizer
 
 from core.globals import TOKENIZERS_DIR
-from hf.download import download_repo_files
+from hf.download import download_repo_paths
 from llm.models import (
     ModelRecordLocalAny, ModelRecordRemoteAny, URLsLocalAny,
     URLsRemoteAny, EngineParamsAny, SamplingParams, ModelRecordAny,
@@ -23,7 +23,7 @@ class ModelBase(BaseModel):
 
 
 def try_get_tokenizer(record: ModelRecordAny) -> Any:
-    paths, error = download_repo_files(
+    paths, error = download_repo_paths(
         record.tokenizer,
         TOKENIZERS_DIR / record.tokenizer.replace("/", "_"),
         [
@@ -94,7 +94,7 @@ class ModelRemote(ModelBase):
 ModelAny = ModelLocal | ModelRemote
 
 
-def try_resolve_record(c_model: ModelConfigAny, local_only: bool) -> Optional[ModelAny]:
+def try_resolve_record(c_model: ModelConfigAny) -> ModelAny:
     if isinstance(c_model, ModelConfigLocalAny):
         filtered_records = [r for r in RECORDS if isinstance(r, ModelRecordLocalAny)]
         record = next((r for r in filtered_records if r.resolve_name == c_model.model), None)
@@ -107,9 +107,6 @@ def try_resolve_record(c_model: ModelConfigAny, local_only: bool) -> Optional[Mo
         return ModelLocal.new(record=record, config=c_model)
 
     elif isinstance(c_model, ModelConfigRemoteAny):
-        if local_only:
-            return None
-
         filtered_records = [r for r in RECORDS if isinstance(r, ModelRecordRemoteAny)]
         record = next((r for r in filtered_records if r.resolve_name == c_model.model), None)
         if record is None:

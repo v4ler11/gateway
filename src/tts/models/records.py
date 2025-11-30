@@ -11,7 +11,10 @@ RECORDS: List[ModelRecordAny] = [
     ModelRecordKokoro(
         model="hexgrad/Kokoro-82M",
         resolve_name="kokoro",
-        files=["kokoro-v1_0.pth", "voices"],
+        files=["voices"], # todo: failed to load model form disk
+        voices=[
+            "af_heart",
+        ],
         params=ParamsKokoro(
             voice="af_heart",
             speed=1.
