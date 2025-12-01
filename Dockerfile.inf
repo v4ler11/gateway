@@ -47,12 +47,14 @@ WORKDIR /app
 
 COPY pyproject.toml ./
 COPY scripts/ ./scripts/
+COPY supervisord.conf /etc/supervisord.conf
 
 RUN uv venv /app/.venv
 RUN uv sync --no-dev --extra inference --no-install-project
 
 COPY src/ ./src/
 RUN uv sync --no-dev --extra inference
+RUN uv pip install supervisor
 RUN uv pip install pip
 RUN uv cache clean
 
@@ -67,4 +69,4 @@ EXPOSE 8001 8051
 
 ENTRYPOINT []
 
-CMD ["inf_tts"]
+CMD ["supervisord", "-c", "/etc/supervisord.conf"]

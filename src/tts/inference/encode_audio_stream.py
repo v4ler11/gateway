@@ -1,10 +1,7 @@
 import asyncio
 import struct
-import shutil
+
 from typing import AsyncGenerator, Literal
-
-
-__all__ = ["encode_audio_stream"]
 
 
 def build_wav_header(sample_rate: int, channels: int) -> bytes:
@@ -51,8 +48,6 @@ async def encode_audio_stream(
     if output_format == "mp3":
         fmt_args = ["-f", "mp3", "-b:a", "128k"]
     elif output_format == "ogg":
-        if not shutil.which("ffmpeg"):
-            raise RuntimeError("FFmpeg not found. Cannot encode to OGG.")
         fmt_args = ["-f", "ogg", "-c:a", "libopus", "-b:a", "32k"]
     else:
         raise ValueError(f"Unsupported format: {output_format}")
