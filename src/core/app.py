@@ -45,7 +45,7 @@ class App(FastAPI):
             self.include_router(router)
 
     async def _shutdown_events(self):
-        pass
+        await self.http_session.close()
 
     def _routers(self):
         return [
@@ -56,7 +56,7 @@ class App(FastAPI):
                 models=[m for m in self.models if isinstance(m, ModelLLMAny)]
             ),
             OAIChatCompletionsRouter(
-                models=[m for m in self.models if isinstance(m, ModelLLMAny)],
+                models=self.models,
                 http_session=self.http_session
             ),
             OAIAudioRouter(

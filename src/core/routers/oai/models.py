@@ -1,10 +1,11 @@
+import base64
+import secrets
 from dataclasses import field
-from typing import List, Union, Literal, Optional, Dict, Any
+from typing import List, Union, Literal, Optional, Dict, Any, Self
 
-from pydantic import BaseModel, model_serializer, Field
+from pydantic import BaseModel, model_serializer, model_validator
 
 from core.routers.utils import str_to_streaming
-from llm.models import SamplingParams
 
 
 type ChatMessage = Union[ChatMessageSystem, ChatMessageUser, ChatMessageAssistant]
@@ -85,9 +86,51 @@ class ChatCompletionsResponseChoiceNonStreaming(_ChatCompletionsResponseChoice):
         return data
 
 
+class AudioResponse(BaseModel):
+    id: Optional[str] = None # sent once in a first chunk
+    data: Optional[str] = None # base64
+    transcript: Optional[str] = None
+
+    @classmethod
+    def new(cls, any_data: str | bytes, first_chunk: bool) -> Self:
+        id_ = None
+        data = None
+        transcript = None
+        if isinstance(any_data, str):
+            transcript = any_data
+        if isinstance(any_data, bytes):
+            data = base64.b64encode(any_data).decode("utf-8")
+        if first_chunk:
+            id_ = AudioResponse.generate_id()
+
+        return cls(id=id_, data=data, transcript=transcript)
+
+    @model_serializer
+    def serialize_model(self) -> Dict[str, Any]:
+        data = {}
+        if self.id is not None:
+            data['id'] = self.id
+        if self.data is not None:
+            data['data'] = self.data
+        if self.transcript is not None:
+            data['transcript'] = self.transcript
+        return data
+
+    @staticmethod
+    def generate_id() -> str:
+        return f"audio_{secrets.token_hex(12)}"
+
+    @model_validator(mode='after')
+    def validate_fields(self) -> Self:
+        if not self.data and not self.transcript:
+            raise ValueError("Either data or transcript should be provided")
+        return self
+
+
 class ChatDelta(BaseModel):
     role: Optional[Literal["assistant"]] = None
     content: Optional[str] = None
+    audio: Optional[AudioResponse] = None
     reasoning_content: Optional[str] = None
 
     @model_serializer # role should be absent in dict if none
@@ -97,6 +140,8 @@ class ChatDelta(BaseModel):
             data['role'] = self.role
         if self.content is not None:
             data['content'] = self.content
+        if self.audio is not None:
+            data['audio'] = self.audio.model_dump()
         if self.reasoning_content is not None:
             data['reasoning_content'] = self.reasoning_content
         return data
@@ -151,6 +196,10 @@ class _ChatCompletionsResponse(BaseModel):
     prompt_logprobs: Optional[Any] = None
     kv_transfer_params: Optional[Any] = None
 
+    @staticmethod
+    def generate_id() -> str:
+        return f"msg_{secrets.token_hex(12)}"
+
     @model_serializer
     def serialize_model(self) -> Dict[str, Any]:
         data = {
@@ -173,51 +222,13 @@ class _ChatCompletionsResponse(BaseModel):
 
 
 class ChatCompletionsResponseNotStreaming(_ChatCompletionsResponse):
-    object: Literal["chat.completion"]
+    object: Literal["chat.completion"] = "chat.completion"
     choices: List[ChatCompletionsResponseChoiceNonStreaming]
 
 
 class ChatCompletionsResponseStreaming(_ChatCompletionsResponse):
-    object: Literal["chat.completion.chunk"]
+    object: Literal["chat.completion.chunk"] = "chat.completion.chunk"
     choices: List[ChatCompletionsResponseChoiceStreaming]
 
     def to_streaming(self) -> str:
         return str_to_streaming(self.model_dump_json())
-
-
-class ChatTemplatesKwargs(BaseModel):
-    reasoning_effort: Literal["low", "medium", "high"] = "low"
-
-
-class ChatPost(BaseModel):
-    model: str
-    messages: List[ChatMessage]
-    stream: bool
-
-    chat_template_kwargs: ChatTemplatesKwargs = Field(default_factory=ChatTemplatesKwargs)
-
-    # sampling params
-    max_tokens: Optional[int] = None
-    temperature: Optional[float] = None
-    min_p: Optional[float] = None
-    top_p: Optional[float] = None
-    top_k: Optional[float] = None
-    stop: Optional[Union[str, List[str]]] = None
-
-    repetition_penalty: Optional[float] = None
-    presence_penalty: Optional[float] = None
-
-    def consume_sampling_params(self, sampling_params: SamplingParams) -> None:
-        if sampling_params.max_tokens is not None:
-            if self.max_tokens is not None:
-                self.max_tokens = min(sampling_params.max_tokens, self.max_tokens)
-            else:
-                self.max_tokens = sampling_params.max_tokens
-        if sampling_params.temperature is not None and self.temperature is None:
-            self.temperature = sampling_params.temperature
-        if sampling_params.min_p is not None and self.min_p is None:
-            self.min_p = sampling_params.min_p
-        if sampling_params.top_p is not None and self.top_p is None:
-            self.top_p = sampling_params.top_p
-        if sampling_params.top_k is not None and self.top_k is None:
-            self.top_k = sampling_params.top_k

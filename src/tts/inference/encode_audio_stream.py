@@ -53,12 +53,12 @@ async def encode_audio_stream(
         raise ValueError(f"Unsupported format: {output_format}")
 
     cmd = [
-              "ffmpeg",
-              "-f", "f32le",
-              "-ar", str(sample_rate),
-              "-ac", str(channels),
-              "-i", "pipe:0"
-          ] + fmt_args + ["pipe:1"]
+        "ffmpeg",
+        "-f", "f32le",
+        "-ar", str(sample_rate),
+        "-ac", str(channels),
+        "-i", "pipe:0"
+    ] + fmt_args + ["pipe:1"]
 
     proc = await asyncio.create_subprocess_exec(
         *cmd,

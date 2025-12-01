@@ -841,6 +841,7 @@ core = [
     { name = "huggingface-hub" },
     { name = "numpy" },
     { name = "pydantic" },
+    { name = "pysbd" },
     { name = "pyyaml" },
     { name = "safetensors" },
     { name = "scalar-fastapi" },
@@ -858,6 +859,7 @@ inf-llamacpp = [
     { name = "huggingface-hub" },
     { name = "numpy" },
     { name = "pydantic" },
+    { name = "pysbd" },
     { name = "pyyaml" },
     { name = "safetensors" },
     { name = "scalar-fastapi" },
@@ -876,6 +878,7 @@ inf-tts = [
     { name = "kokoro" },
     { name = "numpy" },
     { name = "pydantic" },
+    { name = "pysbd" },
     { name = "pyyaml" },
     { name = "safetensors" },
     { name = "scalar-fastapi" },
@@ -896,6 +899,7 @@ inference = [
     { name = "kokoro" },
     { name = "numpy" },
     { name = "pydantic" },
+    { name = "pysbd" },
     { name = "pyyaml" },
     { name = "safetensors" },
     { name = "scalar-fastapi" },
@@ -932,6 +936,7 @@ requires-dist = [
     { name = "kokoro", marker = "extra == 'inf-tts'", specifier = ">=0.9.4" },
     { name = "numpy", marker = "extra == 'core'", specifier = ">=2.3.5" },
     { name = "pydantic", marker = "extra == 'core'", specifier = ">=2.12.4" },
+    { name = "pysbd", marker = "extra == 'core'", specifier = ">=0.3.4" },
     { name = "pyyaml", marker = "extra == 'core'", specifier = ">=6.0.3" },
     { name = "safetensors", marker = "extra == 'core'", specifier = ">=0.7.0" },
     { name = "scalar-fastapi", marker = "extra == 'core'", specifier = ">=1.4.4" },
@@ -2496,6 +2501,14 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/a6/1b/0aa08ee42948b61745ac5b5b5ccaec4669e8884b53d31c8ec20b2fcd6b6f/pyright-1.1.407.tar.gz", hash = "sha256:099674dba5c10489832d4a4b2d302636152a9a42d317986c38474c76fe562262", size = 4122872 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/dc/93/b69052907d032b00c40cb656d21438ec00b3a471733de137a3f65a49a0a0/pyright-1.1.407-py3-none-any.whl", hash = "sha256:6dd419f54fcc13f03b52285796d65e639786373f433e243f8b94cf93a7444d21", size = 5997008 },
+]
+
+[[package]]
+name = "pysbd"
+version = "0.3.4"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/48/0a/c99fb7d7e176f8b176ef19704a32e6a9c6aafdf19ef75a187f701fc15801/pysbd-0.3.4-py3-none-any.whl", hash = "sha256:cd838939b7b0b185fcf86b0baf6636667dfb6e474743beeff878e9f42e022953", size = 71082 },
 ]
 
 [[package]]

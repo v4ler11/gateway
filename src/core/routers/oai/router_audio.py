@@ -1,44 +1,14 @@
-from typing import Literal, List
+from typing import List
 
 import aiohttp
 from fastapi.responses import Response, StreamingResponse
-from pydantic import BaseModel, Field, field_validator
 
+from core.routers.oai.schemas import AudioPost
+from core.routers.oai.stream_utils import stream_audio
 from core.routers.router_base import BaseRouter
 from core.routers.schemas import error_constructor
 from models.definitions import ModelTTSAny
 from models.urls import URLs
-from tts.inference.utils import MEDIA_TYPES
-
-
-class AudioPost(BaseModel):
-    model: str
-    text: str
-    voice: str
-    speed: float = Field(gt=0.0, le=5.0, default=1.0)
-    response_format: Literal['pcm', 'wav', 'mp3', 'ogg']
-    stream: bool = True
-
-    @classmethod
-    @field_validator("text")
-    def validate_text(cls, v):
-        if v.strip() == "":
-            raise ValueError("Text cannot be empty")
-        return v
-
-    def media_type(self):
-        return MEDIA_TYPES[self.response_format]
-
-
-def payload_from_post(model: ModelTTSAny, post: AudioPost):
-    return {
-        "model": model.record.model,
-        "text": post.text,
-        "voice": post.voice,
-        "speed": post.speed,
-        "response_format": post.response_format,
-        "stream": post.stream
-    }
 
 
 class OAIAudioRouter(BaseRouter):
@@ -61,32 +31,19 @@ class OAIAudioRouter(BaseRouter):
                 error_type="model_not_found",
                 status_code=404
             )
+        post.model = model.record.model
 
-        payload = payload_from_post(model, post)
         assert isinstance(model.record.urls, URLs)
         target_url = model.record.urls.generate
 
         try:
             if post.stream:
-                async def proxy_stream():
-                    try:
-                        async with self.http_session.post(target_url, json=payload) as resp_:
-                            if resp_.status != 200:
-                                error_text = await resp_.text()
-                                yield error_text.encode()
-                                return
-
-                            async for chunk in resp_.content.iter_any():
-                                yield chunk
-                    except Exception as e: # noqa
-                        pass
-
                 return StreamingResponse(
-                    proxy_stream(),
+                    stream_audio(self.http_session, model, post),
                     media_type=post.media_type(),
                 )
 
-            async with self.http_session.post(target_url, json=payload) as response:
+            async with self.http_session.post(target_url, json=post.model_dump()) as response:
                 if response.status != 200:
                     return error_constructor(
                         message=f"Inference error: {await response.text()}",
