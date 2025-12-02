@@ -7,6 +7,7 @@ resolution-markers = [
 
 [manifest]
 members = [
+    "api",
     "core",
     "gateway",
     "hf",
@@ -162,6 +163,11 @@ sdist = { url = "https://files.pythonhosted.org/packages/c6/78/7d432127c41b50bcc
 wheels = [
     { url = "https://files.pythonhosted.org/packages/15/b3/9b1a8074496371342ec1e796a96f99c82c945a339cd81a8e73de28b4cf9e/anyio-4.11.0-py3-none-any.whl", hash = "sha256:0287e96f4d26d4149305414d4e3bc32f0dcd0862365a4bddea19d7a1ec38c4fc", size = 109097 },
 ]
+
+[[package]]
+name = "api"
+version = "0.1.0"
+source = { virtual = "src/api" }
 
 [[package]]
 name = "appnope"
@@ -843,6 +849,7 @@ core = [
     { name = "pydantic" },
     { name = "pysbd" },
     { name = "pyyaml" },
+    { name = "requests" },
     { name = "safetensors" },
     { name = "scalar-fastapi" },
     { name = "soundfile" },
@@ -861,6 +868,7 @@ inf-llamacpp = [
     { name = "pydantic" },
     { name = "pysbd" },
     { name = "pyyaml" },
+    { name = "requests" },
     { name = "safetensors" },
     { name = "scalar-fastapi" },
     { name = "soundfile" },
@@ -880,6 +888,7 @@ inf-tts = [
     { name = "pydantic" },
     { name = "pysbd" },
     { name = "pyyaml" },
+    { name = "requests" },
     { name = "safetensors" },
     { name = "scalar-fastapi" },
     { name = "soundfile" },
@@ -901,6 +910,7 @@ inference = [
     { name = "pydantic" },
     { name = "pysbd" },
     { name = "pyyaml" },
+    { name = "requests" },
     { name = "safetensors" },
     { name = "scalar-fastapi" },
     { name = "soundfile" },
@@ -938,6 +948,7 @@ requires-dist = [
     { name = "pydantic", marker = "extra == 'core'", specifier = ">=2.12.4" },
     { name = "pysbd", marker = "extra == 'core'", specifier = ">=0.3.4" },
     { name = "pyyaml", marker = "extra == 'core'", specifier = ">=6.0.3" },
+    { name = "requests", marker = "extra == 'core'", specifier = ">=2.32.5" },
     { name = "safetensors", marker = "extra == 'core'", specifier = ">=0.7.0" },
     { name = "scalar-fastapi", marker = "extra == 'core'", specifier = ">=1.4.4" },
     { name = "soundfile", marker = "extra == 'core'", specifier = ">=0.13.1" },

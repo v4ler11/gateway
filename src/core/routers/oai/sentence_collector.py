@@ -5,13 +5,13 @@ class SentenceCollector:
     def __init__(
             self, 
             segmenter: pysbd.Segmenter,
-            min_check_interval: int = 15,
+            min_check_interval: int = 30,
     ):
         self._segmenter = segmenter
         self._buffer = ""
         self._min_check_interval = min_check_interval
         self._token_counter = 0
-        self._trigger_chars = {'.', '!', '?', ';', ':', '\n'}
+        self._trigger_chars = {'.', '!', '?', '\n'}
 
     def put(self, token: str) -> list[str]:
         if not token:

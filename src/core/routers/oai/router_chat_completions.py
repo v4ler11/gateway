@@ -94,7 +94,7 @@ class OAIChatCompletionsRouter(BaseRouter):
                     status_code=400
                 )
 
-            info(f"Model name resolve {post.model} -> {model.record.model}")
+            info(f"Model name resolve {name} -> {model.record.model}")
 
             if isinstance(model, ModelLLMAny):
                 resolved_llms.append(model)
@@ -219,7 +219,7 @@ class OAIChatCompletionsRouter(BaseRouter):
                         comp.model = r_models.llm.record.resolve_name
                         yield comp.model_dump_json()
                 else:
-                    pass
+                    raise ValueError("Voice modality is only supported with stream=True due to latency constraints.")
 
         try:
             r_models_mb = self._try_resolve_post_models(post)

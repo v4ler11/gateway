@@ -24,6 +24,7 @@ core = [
     "soundfile>=0.13.1",
     "numpy>=2.3.5",
     "pysbd>=0.3.4",
+    "requests>=2.32.5",
 ]
 
 inf-llamacpp = [
@@ -55,6 +56,7 @@ dev = [
 
 [tool.uv.workspace]
 members = [
+    "src/api",
     "src/core",
     "src/models",
     "src/hf",
@@ -63,6 +65,7 @@ members = [
 ]
 
 [tool.uv.sources]
+api = { workspace = true }
 core = { workspace = true }
 models = { workspace = true }
 hf = { workspace = true }

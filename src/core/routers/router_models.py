@@ -1,5 +1,5 @@
 import time
-from typing import Literal, List
+from typing import Literal, List, Optional
 
 from pydantic import BaseModel
 from starlette import status
@@ -7,7 +7,13 @@ from starlette import status
 from core.routers.router_base import BaseRouter
 from core.routers.schemas import ErrorResponse, error_constructor
 from models.definitions import ModelAny
-from models.status import Status
+
+
+class ModelStatus(BaseModel):
+    ping_ok: bool
+    request_ok: bool
+    error: Optional[str]
+    running: bool
 
 
 class ModelResponse(BaseModel):
@@ -15,7 +21,7 @@ class ModelResponse(BaseModel):
     caps: List[str]
     object: Literal["model"] = "model"
     created: int
-    status: Status
+    status: ModelStatus
 
 
 class ModelsResponse(BaseModel):
@@ -57,7 +63,12 @@ class ModelsRouter(BaseRouter):
                         id=m.record.resolve_name,
                         caps=m.record.caps,
                         created=int(time.time()),
-                        status=m.status,
+                        status=ModelStatus(
+                            ping_ok=m.status.ping_ok,
+                            request_ok=m.status.request_ok,
+                            error=m.status.error,
+                            running=m.status.running
+                        ),
                     )
                     for m in self.models
                 ]

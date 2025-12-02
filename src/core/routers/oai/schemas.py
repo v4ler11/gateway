@@ -68,6 +68,8 @@ class ChatPost(BaseModel):
     def validate_audio_requirements(self) -> Self:
         if "audio" in self.modalities and self.audio is None:
             raise ValueError("Field 'audio' is required when 'modalities' contains 'audio'.")
+        if "audio" in self.modalities and not self.stream:
+            raise ValueError("Field 'stream' must be True when 'modalities' contains 'audio' due to latency constraints.")
         return self
 
     def consume_sampling_params(self, sampling_params: SamplingParams) -> None:
