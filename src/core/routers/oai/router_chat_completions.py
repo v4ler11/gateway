@@ -10,24 +10,53 @@ from fastapi.responses import StreamingResponse, Response
 from pydantic import BaseModel
 
 from core.logger import exception, info
-from core.routers.oai.models import ChatMessage, ChatCompletionsResponseNotStreaming, ChatCompletionsResponseStreaming, \
-    ChatCompletionsResponseChoiceStreaming, ChatDelta, AudioResponse
+from core.routers.oai.models import (
+    ChatMessage, ChatCompletionsResponseNotStreaming, ChatCompletionsResponseStreaming,
+    ChatCompletionsResponseChoiceStreaming, ChatDelta, AudioResponse, ChatMessageSystem
+)
 from core.routers.oai.schemas import ChatPost, AudioPost, ChatPostAudio
 from core.routers.oai.stream_utils import stream_with_chat, stream_with_chat_synthesised, encode_synthesized_stream
 from core.routers.oai.utils import limit_messages
 from core.routers.router_base import BaseRouter
 from core.routers.schemas import error_constructor
+from llm.models.prompts import LLM_TTS_PROMPT
 from models.definitions import ModelLLMAny, ModelTTSAny, ModelAny
 
 
 __all__ = ["OAIChatCompletionsRouter"]
 
 
-
 def validate_messages(messages: List[ChatMessage]):
     role_counts = Counter(message.role for message in messages)
     if role_counts["system"] > 1:
         raise ValueError(f"Only one system role is allowed in messages, got {role_counts}:\n{messages}")
+
+
+def include_system_if_needed(post: ChatPost, model: ModelLLMAny) -> List[ChatMessage]:
+    messages = list(post.messages)
+
+    system_message = next((m for m in messages if isinstance(m, ChatMessageSystem)), None)
+
+    needs_tts = "audio" in post.modalities
+
+    if system_message:
+        if needs_tts and LLM_TTS_PROMPT not in system_message.content:
+            prefix = "\n\n" if system_message.content else ""
+            system_message.content += f"{prefix}{LLM_TTS_PROMPT}"
+    else:
+        base_content = model.record.prompt if model.record.prompt else ""
+
+        if needs_tts:
+            separator = "\n\n" if base_content else ""
+            final_content = f"{base_content}{separator}{LLM_TTS_PROMPT}"
+        else:
+            final_content = base_content
+
+        if final_content:
+            new_system_message = ChatMessageSystem(content=final_content)
+            messages.insert(0, new_system_message)
+
+    return messages
 
 
 def llm_chat_post_from_post(
@@ -227,7 +256,9 @@ class OAIChatCompletionsRouter(BaseRouter):
                 return r_models_mb
             r_models = r_models_mb
 
-            messages = limit_messages(post.messages, r_models.llm)
+            messages = include_system_if_needed(post, r_models.llm)
+
+            messages = limit_messages(messages, r_models.llm)
             validate_messages(messages)
 
             chat_post = llm_chat_post_from_post(post, r_models.llm, messages)

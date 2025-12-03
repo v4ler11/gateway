@@ -26,6 +26,7 @@ class ModelRecordBase(BaseModel):
 
     tokenizer: str
     sampling_params: SamplingParams
+    prompt: Optional[str] = None
 
     @classmethod
     @field_validator('tokenizer')

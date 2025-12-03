@@ -3,6 +3,7 @@ from typing import List
 from llm.models import ModelRecordAny
 from llm.models.engine_params import EngineParamsLlamacpp
 from llm.models.model_record import ModelRecordLlamaCpp, SamplingParams, ModelRecordLMStudio
+from llm.models.prompts import BASE_PROMPT
 
 
 __all__ = ["RECORDS"]
@@ -18,6 +19,7 @@ RECORDS: List[ModelRecordAny] = [
             max_tokens=8096,
             temperature=1.0,
         ),
+        prompt=BASE_PROMPT,
         model_file="gpt-oss-20b-F16.gguf",
         engine_params=EngineParamsLlamacpp(
             ctx_size=64_000,
