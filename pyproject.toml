@@ -56,7 +56,6 @@ dev = [
 
 [tool.uv.workspace]
 members = [
-    "src/api",
     "src/core",
     "src/models",
     "src/hf",
@@ -65,7 +64,6 @@ members = [
 ]
 
 [tool.uv.sources]
-api = { workspace = true }
 core = { workspace = true }
 models = { workspace = true }
 hf = { workspace = true }
