@@ -1,39 +1,19 @@
-from typing import Generator, Any, Literal
+from typing import Generator, Any
 
 import torch
 
 from kokoro import KPipeline
-from pydantic import BaseModel, Field, field_validator
 from starlette.concurrency import iterate_in_threadpool
-from starlette.responses import StreamingResponse, Response
+from starlette.responses import StreamingResponse
 
 from core.globals import MODELS_DIR
+from core.logger import error
 from core.routers.router_base import BaseRouter
 from core.routers.schemas import error_constructor
 from hf.download import download_repo_paths
 from models.definitions import ModelTTSAny
-from tts.inference.encode_audio_stream import encode_audio_stream
-from tts.inference.utils import MEDIA_TYPES
+from tts.inference.schemas import TTSAudioPost
 from tts.models import ModelRecordKokoro
-
-
-class AudioPost(BaseModel):
-    model: str # todo: add validation when >1 model
-    text: str
-    voice: str
-    speed: float = Field(gt=0.0, le=5.0, default=1.0)
-    response_format: Literal["pcm", "wav", "mp3", "ogg"]
-    stream: bool = True
-
-    @classmethod
-    @field_validator("text")
-    def validate_text(cls, v):
-        if v.strip() == "":
-            raise ValueError("Text cannot be empty")
-        return v
-
-    def media_type(self):
-        return MEDIA_TYPES[self.response_format]
 
 
 class AudioRouter(BaseRouter):
@@ -74,7 +54,7 @@ class AudioRouter(BaseRouter):
         self._pipeline = pipeline
 
 
-    async def _audio(self, post: AudioPost):
+    async def _audio(self, post: TTSAudioPost):
         assert isinstance(self.model.record, ModelRecordKokoro) # todo: remove when >1 model
 
         async def audio_streamer():
@@ -85,32 +65,17 @@ class AudioRouter(BaseRouter):
                 speed=post.speed,
                 split_pattern=None,
             )
-            async def async_generator():
-                async for _, _, a_tensor in iterate_in_threadpool(stream):
-                    yield a_tensor.numpy().tobytes()
-
-            async for chunk_ in encode_audio_stream(
-                async_generator(),
-                output_format=post.response_format,
-                sample_rate=self.model.record.constants.sample_rate,
-                channels=self.model.record.constants.channels,
-            ):
-                yield chunk_
+            async for _, _, a_tensor in iterate_in_threadpool(stream):
+                yield a_tensor.numpy().tobytes()
 
         if len(post.text) > self.model.record.context_size:
+            err = f"Text is too long: {len(post.text)}; Max length is {self.model.record.context_size}"
+            error(err)
             return error_constructor(
-                message=f"Text is too long: {len(post.text)}; Max length is {self.model.record.context_size}",
+                message=err,
                 error_type="validation_error",
                 status_code=400,
             )
 
         streamer = audio_streamer()
-        if post.stream:
-            return StreamingResponse(streamer, media_type=post.media_type())
-
-        chunks = []
-        async for chunk in audio_streamer():
-            chunks.append(chunk)
-        content = b"".join(chunks)
-
-        return Response(content=content, media_type=post.media_type())
+        return StreamingResponse(streamer, media_type="application/octet-stream")

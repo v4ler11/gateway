@@ -7,12 +7,13 @@ import pysbd
 
 from core.logger import error
 from core.routers.oai.models import ChatCompletionsResponseStreaming, ChatDelta
-from core.routers.oai.schemas import AudioPost, ChatPost
+from core.routers.oai.schemas import ChatPost
 from core.routers.oai.sentence_collector import SentenceCollector
 from core.routers.utils import parse_sse_streaming
 from models.definitions import ModelLLMAny, ModelTTSAny
 from models.urls import URLs
 from tts.inference.encode_audio_stream import encode_audio_stream
+from tts.inference.schemas import TTSAudioPost
 
 
 async def stream_with_chat(
@@ -35,11 +36,9 @@ async def stream_with_chat(
 async def stream_audio(
         http_session: aiohttp.ClientSession,
         model: ModelTTSAny,
-        post: AudioPost
+        post: TTSAudioPost
 ) -> AsyncGenerator[bytes, None]:
     assert isinstance(model.record.urls, URLs)
-    if not post.stream:
-        raise ValueError(f"post.stream should be True, got post.stream={post.stream}")
 
     try:
         async with http_session.post(
@@ -62,7 +61,7 @@ async def stream_audio(
 async def stream_with_chat_synthesised(
         http_session: aiohttp.ClientSession,
         tts_model: ModelTTSAny,
-        a_post: AudioPost,
+        a_post: TTSAudioPost,
         llm_stream: AsyncGenerator[ChatCompletionsResponseStreaming, None],
         segmenter: pysbd.Segmenter,
 ) -> AsyncGenerator[str | bytes, None]:
@@ -183,75 +182,51 @@ async def encode_synthesized_stream(
         synthesizer: AsyncGenerator[str | bytes, None],
         output_format: Literal["pcm", "wav", "mp3", "ogg"],
 ) -> AsyncGenerator[str | bytes, None]:
-    output_queue: asyncio.Queue[Optional[str | bytes]] = asyncio.Queue()
+    audio_queue: asyncio.Queue[Optional[bytes]] = asyncio.Queue()
+    result_queue: asyncio.Queue[Optional[str | bytes]] = asyncio.Queue()
 
-    async def queue_feeder(q: asyncio.Queue) -> AsyncGenerator[bytes, None]:
+    async def audio_source():
         while True:
-            chunk = await q.get()
+            chunk = await audio_queue.get()
             if chunk is None:
-                q.task_done()
                 break
             yield chunk
-            q.task_done()
 
-    async def run_encoder_batch(input_q: asyncio.Queue):
+    async def input_processor():
         try:
-            async for encoded_chunk in encode_audio_stream(
-                    input_stream=queue_feeder(input_q),
-                    output_format=output_format,
-                    sample_rate=tts_model.record.constants.sample_rate,
-                    channels=tts_model.record.constants.channels,
-            ):
-                await output_queue.put(encoded_chunk)
-        except Exception as e:
-            error(f"Error in encoder batch: {e}")
-
-    async def stream_processor():
-        current_pcm_queue: asyncio.Queue[Optional[bytes]] = asyncio.Queue()
-        current_encoder_task = asyncio.create_task(run_encoder_batch(current_pcm_queue))
-        has_audio_in_batch = False
-
-        try:
-            async for chunk in synthesizer:
-                if isinstance(chunk, str):
-                    if has_audio_in_batch:
-                        await current_pcm_queue.put(None)
-                        await current_encoder_task
-
-                        current_pcm_queue = asyncio.Queue()
-                        current_encoder_task = asyncio.create_task(run_encoder_batch(current_pcm_queue))
-                        has_audio_in_batch = False
-
-                    await output_queue.put(chunk)
-
+            async for item in synthesizer:
+                if isinstance(item, str):
+                    await result_queue.put(item)
                 else:
-                    has_audio_in_batch = True
-                    await current_pcm_queue.put(chunk)
-
-            if has_audio_in_batch:
-                await current_pcm_queue.put(None)
-                await current_encoder_task
-            else:
-                current_encoder_task.cancel()
-
+                    await audio_queue.put(item)
         except Exception as e:
-            error(f"Error in stream processor: {e}")
+            error(f"Stream input error: {e}")
         finally:
-            await output_queue.put(None)
+            await audio_queue.put(None)
 
-    processor_task = asyncio.create_task(stream_processor())
+    async def encoder_runner():
+        try:
+            async for chunk in encode_audio_stream(
+                input_stream=audio_source(),
+                output_format=output_format,
+                sample_rate=tts_model.record.constants.sample_rate,
+                channels=tts_model.record.constants.channels
+            ):
+                await result_queue.put(chunk)
+        except Exception as e:
+            error(f"Stream encoder error: {e}")
+        finally:
+            await result_queue.put(None)
+
+    t_input = asyncio.create_task(input_processor())
+    t_encoder = asyncio.create_task(encoder_runner())
 
     try:
         while True:
-            item = await output_queue.get()
-            if item is None:
-                output_queue.task_done()
+            res = await result_queue.get()
+            if res is None:
                 break
-
-            yield item
-            output_queue.task_done()
-
+            yield res
     finally:
-        if not processor_task.done():
-            processor_task.cancel()
-        await asyncio.gather(processor_task, return_exceptions=True)
+        t_input.cancel()
+        t_encoder.cancel()

@@ -21,6 +21,7 @@ from core.routers.router_base import BaseRouter
 from core.routers.schemas import error_constructor
 from llm.models.prompts import LLM_TTS_PROMPT
 from models.definitions import ModelLLMAny, ModelTTSAny, ModelAny
+from tts.inference.schemas import TTSAudioPost
 
 
 __all__ = ["OAIChatCompletionsRouter"]
@@ -188,13 +189,11 @@ class OAIChatCompletionsRouter(BaseRouter):
                     assert isinstance(r_models.tts, ModelTTSAny)
                     assert isinstance(post.audio, ChatPostAudio)
 
-                    a_post = AudioPost(
+                    a_post = TTSAudioPost(
                         model=r_models.tts.record.model,
                         text="pass",
                         voice=post.audio.voice or r_models.tts.record.params.voice,
                         speed=r_models.tts.record.params.speed,
-                        response_format="pcm",
-                        stream=True
                     )
 
                     synthesizer = stream_with_chat_synthesised(
