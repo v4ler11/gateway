@@ -5,7 +5,7 @@ import pysbd
 
 from core.routers.oai.schemas import AudioPost
 from core.routers.oai.sentence_collector import SentenceCollector
-from core.routers.oai.stream_utils import stream_audio
+from core.routers.oai.stream_utils import stream_audio, stream_audio_proto
 from core.routers.router_base import BaseRouter
 from core.routers.schemas import error_constructor
 from models.definitions import ModelTTSAny
@@ -73,7 +73,7 @@ class OAIAudioRouter(BaseRouter):
                     voice=post.voice,
                     speed=post.speed
                 )
-                async for audio_ in stream_audio(self.http_session, model, a_post):
+                async for audio_ in stream_audio_proto(model, a_post):
                     yield audio_
 
         async def streamer_encoded(stream: AsyncGenerator[bytes, None]):

@@ -4,12 +4,16 @@ from typing import List, AsyncGenerator, Optional, Literal
 
 import aiohttp
 import pysbd
+from grpclib import GRPCError
+
+from grpclib.client import Channel
 
 from core.logger import error
 from core.routers.oai.models import ChatCompletionsResponseStreaming, ChatDelta
 from core.routers.oai.schemas import ChatPost
 from core.routers.oai.sentence_collector import SentenceCollector
 from core.routers.utils import parse_sse_streaming
+from generated.tts_audio import ProtoAudioStreamStub
 from models.definitions import ModelLLMAny, ModelTTSAny
 from models.urls import URLs
 from tts.inference.encode_audio_stream import encode_audio_stream
@@ -56,6 +60,41 @@ async def stream_audio(
 
     except Exception as e:  # noqa
         pass
+
+
+# todo: fix errors
+# gat-inf   | 20251208 22:46:23 ERROR [server.py:468 request_handler] Application error
+# gat-inf   | Traceback (most recent call last):
+# gat-inf   |   File "/app/.venv/lib/python3.12/site-packages/grpclib/server.py", line 446, in request_handler
+# gat-inf   |     await method_func(stream)
+# gat-inf   |   File "/app/src/generated/tts_audio/__init__.py", line 68, in __rpc_stream_audio
+# gat-inf   |     await self._call_rpc_handler_server_stream(
+# gat-inf   |   File "/app/.venv/lib/python3.12/site-packages/betterproto/grpc/grpclib_server.py", line 31, in _call_rpc_handler_server_stream
+# gat-inf   |     await stream.send_message(response_message)
+# gat-inf   |   File "/app/.venv/lib/python3.12/site-packages/grpclib/server.py", line 196, in send_message
+# gat-inf   |     await send_message(self._stream, self._codec, message, self._send_type)
+# gat-inf   |   File "/app/.venv/lib/python3.12/site-packages/grpclib/stream.py", line 44, in send_message
+# gat-inf   |     reply_bin = codec.encode(message, message_type)
+# gat-inf   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+# gat-inf   |   File "/app/.venv/lib/python3.12/site-packages/grpclib/encoding/proto.py", line 45, in encode
+# gat-inf   |     raise TypeError('Message must be of type {!r}, not {!r}'
+# gat-inf   | TypeError: Message must be of type <class 'src.generated.tts_audio.ProtoResp'>, not <class 'generated.tts_audio.ProtoResp'>
+
+async def stream_audio_proto(
+        model: ModelTTSAny,
+        post: TTSAudioPost
+):
+    async with Channel(model.config.container, 50051) as channel:
+        stub = ProtoAudioStreamStub(channel)
+
+        try:
+            async for audio in stub.stream_audio(post.into_proto()):
+                yield audio.data
+
+        except GRPCError as e:
+            err = f"failed to stream_audio_proto: {str(e)}"
+            error(err)
+            raise e
 
 
 async def stream_with_chat_synthesised(
@@ -153,7 +192,7 @@ async def stream_with_chat_synthesised(
 
                 a_post_clone = a_post.model_copy(update={"text": full_text})
 
-                audio_iterator = stream_audio(http_session, tts_model, a_post_clone).__aiter__()
+                audio_iterator = stream_audio_proto(tts_model, a_post_clone).__aiter__()
 
                 while True:
                     try:

@@ -53,6 +53,10 @@ RUN uv venv /app/.venv
 RUN uv sync --no-dev --extra inference --no-install-project
 
 COPY src/ ./src/
+COPY proto/ ./proto/
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv run scripts/gen_proto.py
+
 RUN uv sync --no-dev --extra inference
 RUN uv pip install supervisor
 RUN uv pip install pip
@@ -61,6 +65,7 @@ RUN uv cache clean
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PATH="/app/.venv/bin:$PATH" \
+    PYTHONPATH="${PYTHONPATH}:/app" \
     UV_CACHE_DIR=/tmp/uv-cache \
     LD_LIBRARY_PATH="/app:$LD_LIBRARY_PATH"
 

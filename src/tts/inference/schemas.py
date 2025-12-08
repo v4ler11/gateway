@@ -1,4 +1,8 @@
+from typing import Self
+
 from pydantic import field_validator, BaseModel, Field
+
+from generated.tts_audio import ProtoPost
 
 
 class TTSAudioPost(BaseModel):
@@ -6,6 +10,23 @@ class TTSAudioPost(BaseModel):
     text: str
     voice: str
     speed: float = Field(gt=0.0, le=5.0, default=1.0)
+
+    @classmethod
+    def from_proto(cls, proto: ProtoPost) -> Self:
+        return cls(
+            model=proto.model,
+            text=proto.text,
+            voice=proto.voice,
+            speed=proto.speed,
+        )
+
+    def into_proto(self) -> ProtoPost:
+        return ProtoPost(
+            model=self.model,
+            text=self.text,
+            voice=self.voice,
+            speed=self.speed,
+        )
 
     @classmethod
     @field_validator("text")

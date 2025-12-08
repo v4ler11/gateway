@@ -25,6 +25,8 @@ core = [
     "numpy>=2.3.5",
     "pysbd>=0.3.4",
     "requests>=2.32.5",
+    "betterproto[compiler]>=2.0.0b6",
+    "grpclib>=0.4.8",
 ]
 
 inf-llamacpp = [
@@ -34,7 +36,11 @@ inf-llamacpp = [
 inf-tts = [
     "gateway[core]",
     "kokoro>=0.9.4",
-    "soundfile>=0.13.1",
+    "torch>=2.9.1",
+    "torchaudio>=2.9.1",
+]
+
+inf-stt = [
     "torch>=2.9.1",
     "torchaudio>=2.9.1",
 ]
@@ -42,6 +48,7 @@ inf-tts = [
 inference = [
     "gateway[inf-llamacpp]",
     "gateway[inf-tts]",
+    "gateway[inf-stt]",
 ]
 
 [dependency-groups]
@@ -61,6 +68,7 @@ members = [
     "src/hf",
     "src/llm",
     "src/tts",
+    "src/stt",
 ]
 
 [tool.uv.sources]
@@ -69,6 +77,7 @@ models = { workspace = true }
 hf = { workspace = true }
 llm = { workspace = true }
 tts = { workspace = true }
+stt = { workspace = true }
 
 [tool.uv]
 package = true
@@ -77,6 +86,7 @@ package = true
 serve = "core.main:main"
 inf_llamacpp = "llm.inference.llamacpp:main"
 inf_tts = "tts.inference.main:main"
+inf_stt = "stt.inference.main:main"
 
 [tool.pytest.ini_options]
 markers = []

@@ -1,6 +1,7 @@
 from typing import List
 
 from fastapi import FastAPI
+from kokoro import KPipeline
 
 from core.routers.router_base import BaseRouter
 from models.definitions import ModelTTSAny
@@ -14,17 +15,24 @@ class App(FastAPI):
     def __init__(
             self,
             models: List[ModelTTSAny],
+            pipeline: KPipeline,
             *args, **kwargs,
     ):
         super().__init__(*args, **kwargs)
         self.models = models
+        self.pipeline = pipeline
         self.add_event_handler("startup", self._startup_events)
         self.add_event_handler("shutdown", self._shutdown_events)
 
     @classmethod
-    def new(cls, models: List[ModelTTSAny]) -> "App":
+    def new(
+            cls,
+            models: List[ModelTTSAny],
+            pipeline: KPipeline
+    ) -> "App":
         return cls(
             models=models,
+            pipeline=pipeline,
             docs_url=None,
             redoc_url=None,
             openapi_url="/v1/openapi.json",
@@ -41,5 +49,5 @@ class App(FastAPI):
     def _routers(self):
         return [
             BaseRouter(),
-            AudioRouter(model=self.models[0])
+            AudioRouter(model=self.models[0], pipeline=self.pipeline),
         ]

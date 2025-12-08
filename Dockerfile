@@ -17,6 +17,10 @@ RUN uv venv /app/.venv
 RUN uv sync --no-dev --extra core --no-install-project
 
 COPY src/ ./src/
+COPY proto/ ./proto/
+
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv run scripts/gen_proto.py
 
 RUN uv sync --no-dev --extra core
 RUN uv cache clean
@@ -24,6 +28,7 @@ RUN uv cache clean
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PATH="/app/.venv/bin:$PATH" \
+    PYTHONPATH="${PYTHONPATH}:/app" \
     UV_CACHE_DIR=/tmp/uv-cache
 
 EXPOSE 8000
