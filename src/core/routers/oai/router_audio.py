@@ -5,11 +5,12 @@ import pysbd
 
 from core.routers.oai.schemas import AudioPost
 from core.routers.oai.sentence_collector import SentenceCollector
-from core.routers.oai.stream_utils import stream_audio, stream_audio_proto
 from core.routers.router_base import BaseRouter
 from core.routers.schemas import error_constructor
 from models.definitions import ModelTTSAny
 from starlette.responses import StreamingResponse, Response
+
+from tts.client import stream_audio_proto
 from tts.inference.encode_audio_stream import encode_audio_stream
 from tts.inference.schemas import TTSAudioPost
 

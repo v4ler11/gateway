@@ -10,15 +10,16 @@ from fastapi.responses import StreamingResponse, Response
 from pydantic import BaseModel
 
 from core.logger import exception, info
+from core.pipelines.chat_synthesized import stream_with_chat_synthesised, encode_synthesized_stream
 from core.routers.oai.models import (
     ChatMessage, ChatCompletionsResponseNotStreaming, ChatCompletionsResponseStreaming,
     ChatCompletionsResponseChoiceStreaming, ChatDelta, AudioResponse, ChatMessageSystem
 )
-from core.routers.oai.schemas import ChatPost, AudioPost, ChatPostAudio
-from core.routers.oai.stream_utils import stream_with_chat, stream_with_chat_synthesised, encode_synthesized_stream
+from core.routers.oai.schemas import ChatPost, ChatPostAudio
 from core.routers.oai.utils import limit_messages
 from core.routers.router_base import BaseRouter
 from core.routers.schemas import error_constructor
+from llm.client import stream_with_chat
 from llm.models.prompts import LLM_TTS_PROMPT
 from models.definitions import ModelLLMAny, ModelTTSAny, ModelAny
 from tts.inference.schemas import TTSAudioPost
@@ -197,7 +198,6 @@ class OAIChatCompletionsRouter(BaseRouter):
                     )
 
                     synthesizer = stream_with_chat_synthesised(
-                        self.http_session,
                         r_models.tts,
                         a_post,
                         llm_stream,

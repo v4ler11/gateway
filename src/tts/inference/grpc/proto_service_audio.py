@@ -2,10 +2,9 @@ from grpclib import GRPCError, Status
 from kokoro import KPipeline
 
 from core.logger import warn, error
-from generated.tts_audio import ProtoResp, ProtoPost
 
 from models.definitions import ModelTTSAny
-from src.generated.tts_audio import ProtoAudioStreamBase
+from generated.tts_audio import ProtoAudioStreamBase, ProtoResp, ProtoPost
 from tts.inference.schemas import TTSAudioPost
 from tts.inference.stream_utils import audio_streamer
 from tts.models import ModelRecordKokoro

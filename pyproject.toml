@@ -100,3 +100,9 @@ addopts = [
     "-v",
 ]
 asyncio_mode = "auto"
+
+[tool.pyright]
+ignore = [
+    "**/grpc",
+    "src/generated",
+]

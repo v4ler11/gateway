@@ -5,7 +5,7 @@ from kokoro import KPipeline
 
 from core.routers.router_base import BaseRouter
 from models.definitions import ModelTTSAny
-from tts.inference.router_audio import AudioRouter
+from tts.inference.rest.router_audio import AudioRouter
 
 
 __all__ = ["App"]

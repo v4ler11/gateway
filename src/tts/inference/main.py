@@ -7,7 +7,7 @@ from core import BASE_DIR
 from core.logger import init_logger, info
 from models.config import Config, models_from_config
 from models.definitions import ModelTTSAny
-from tts.inference.app import App
+from tts.inference.rest.app import App
 from tts.inference.grpc.server import grpc_server
 from tts.inference.pipeline import init_pipeline
 
