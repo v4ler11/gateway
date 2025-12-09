@@ -27,5 +27,8 @@ jobs:
       - name: Install dependencies
         run: uv sync --frozen
 
+      - name: Generate Proto files
+        run: uv run scripts/gen_proto.py
+
       - name: Run Pyright
         run: uv run pyright
