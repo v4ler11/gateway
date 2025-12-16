@@ -5,10 +5,15 @@ from typing import List, Dict, Any
 from pydantic import BaseModel, ValidationError
 
 from core.globals import YAML_CONFIG
-from models.definitions import ModelConfigAny, MODEL_CONFIG_CLASSES, ModelConfigLLMAny, ModelConfigTTSAny, ModelAny
+from models.definitions import (
+    ModelConfigAny, MODEL_CONFIG_CLASSES,
+    ModelConfigLLMAny, ModelConfigTTSAny, ModelConfigSTTAny,
+    ModelAny
+)
 
 from llm.models.models import try_resolve_record as try_resolve_record_llm
 from tts.models.models import try_resolve_record as try_resolve_record_tts
+from stt.models.models import try_resolve_record as try_resolve_record_stt
 
 
 def validate_model_from_config(data: Dict[str, Any]) -> ModelConfigAny:
@@ -65,6 +70,10 @@ def models_from_config(config: Config) -> List[ModelAny]:
 
         elif isinstance(model, ModelConfigTTSAny):
             record = try_resolve_record_tts(model)
+            records.append(record)
+
+        elif isinstance(model, ModelConfigSTTAny):
+            record = try_resolve_record_stt(model)
             records.append(record)
 
         else:

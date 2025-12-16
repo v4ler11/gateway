@@ -1,10 +1,10 @@
 from typing import List
 
 from tts.models import ModelRecordAny, ModelRecordKokoro
+from tts.models.model_record import ParamsKokoro
+
 
 __all__ = ["RECORDS"]
-
-from tts.models.model_record import ParamsKokoro
 
 
 RECORDS: List[ModelRecordAny] = [

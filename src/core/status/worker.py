@@ -8,9 +8,10 @@ import aiohttp
 from core.logger import error, info
 from core.status.models import TaskType, Task
 from core.abstract import Worker
-from models.definitions import ModelAny, ModelLLMAny, ModelTTSAny
+from models.definitions import ModelAny, ModelLLMAny, ModelTTSAny, ModelSTTAny
 from llm.status import task_worker as task_worker_llm
 from tts.status import task_worker as task_worker_tts
+from stt.status import task_worker as task_worker_stt
 
 
 async def smart_sleep(stop_event: threading.Event, delay: float) -> bool:
@@ -73,9 +74,11 @@ async def _async_entrypoint(models: List[ModelAny], stop_event: threading.Event)
         for model in models:
             if isinstance(model, ModelLLMAny):
                 task_worker = task_worker_llm
-
             elif isinstance(model, ModelTTSAny):
                 task_worker = task_worker_tts
+
+            elif isinstance(model, ModelSTTAny):
+                task_worker = task_worker_stt
 
             else:
                 raise ValueError(f"Unknown model type: {type(model)}")
@@ -83,6 +86,8 @@ async def _async_entrypoint(models: List[ModelAny], stop_event: threading.Event)
             tasks.append(asyncio.create_task(monitor_single_model(
                 model, a_session, stop_event, task_worker
             )))
+
+            info(f"MODEL {model.record.resolve_name}: Start status worker")
 
         await asyncio.gather(*tasks)
 

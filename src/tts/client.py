@@ -33,6 +33,7 @@ async def stream_audio(
                     yield chunk
 
     except Exception as e:  # noqa
+        error(f"failed to stream_audio: {str(e)}")
         pass
 
 
@@ -40,7 +41,7 @@ async def stream_audio_proto(
         model: ModelTTSAny,
         post: TTSAudioPost
 ):
-    async with Channel(model.config.container, 50051) as channel:
+    async with Channel(model.config.container, model.config.port) as channel:
         stub = ProtoAudioStreamStub(channel)
 
         try:

@@ -61,6 +61,5 @@ class App(FastAPI):
             ),
             OAIAudioRouter(
                 models=[m for m in self.models if isinstance(m, ModelTTSAny)],
-                http_session=self.http_session
             )
         ]

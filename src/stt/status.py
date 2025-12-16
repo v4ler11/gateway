@@ -1,14 +1,19 @@
 import asyncio
+import io
 
 import aiohttp
+from fastapi import UploadFile
 
+from core import BASE_DIR
 from core.logger import error
+from core.routers.oai.router_transcriptions import file_to_stream, get_pcm_stream
 from core.status.models import Task, TaskType
-from models.definitions import ModelTTSAny
-from tts.models import ModelRecordKokoro
+from models.definitions import ModelSTTAny
+from stt.models import ModelRecordParakeet
 
 
 STARTUP_TIME: float = 360.
+MOCK_FILE = BASE_DIR / "assets" / "mock" / "mock_stt.flac"
 
 
 async def task_worker(
@@ -17,8 +22,8 @@ async def task_worker(
         t0: float,
         task: Task,
 ):
-    assert isinstance(task.model, ModelTTSAny)
-    assert isinstance(task.model.record, ModelRecordKokoro) # todo: remove when >1 model
+    assert isinstance(task.model, ModelSTTAny)
+    assert isinstance(task.model.record, ModelRecordParakeet) # todo: remove when >1 model
 
     try:
         if task.task_type == TaskType.ping:
@@ -37,13 +42,20 @@ async def task_worker(
                         error(f"MODEL {task.model.record.model}: {err}")
 
         elif task.task_type == TaskType.request:
+            upload_file = UploadFile(
+                file=io.BytesIO(MOCK_FILE.read_bytes()),
+                filename="audio.flac",
+            )
+            pcm_data = b""
+
+            file_stream = file_to_stream(upload_file)
+            pcm_stream = get_pcm_stream(file_stream)
+            async for chunk in pcm_stream:
+                pcm_data += chunk
+
             payload = {
                 "model": task.model.record.model,
-                "text": "Hello, world!",
-                "voice": task.model.record.params.voice,
-                "speed": task.model.record.params.speed,
-                "response_format": "pcm",
-                "stream": False,
+                "audio": pcm_data,
             }
             async with a_session.post(
                     url=task.model.urls.generate,

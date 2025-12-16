@@ -43,6 +43,7 @@ inf-tts = [
 inf-stt = [
     "torch>=2.9.1",
     "torchaudio>=2.9.1",
+    "nemo-toolkit[asr]>=2.1.0",
 ]
 
 inference = [
@@ -104,4 +105,5 @@ asyncio_mode = "auto"
 [tool.pyright]
 ignore = [
     "src/generated",
+    "src/stt/inference/streaming_parakeet.py",
 ]

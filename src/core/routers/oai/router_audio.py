@@ -1,6 +1,5 @@
 from typing import List, AsyncGenerator
 
-import aiohttp
 import pysbd
 
 from core.routers.oai.schemas import AudioPost
@@ -53,13 +52,11 @@ class OAIAudioRouter(BaseRouter):
     def __init__(
             self,
             models: List[ModelTTSAny],
-            http_session: aiohttp.ClientSession,
             *args, **kwargs
     ):
         super().__init__(*args, **kwargs)
         self.segmenter = pysbd.Segmenter(language="en", clean=False)
         self.models = models
-        self.http_session = http_session
         self.add_api_route("/oai/v1/audio/speech", self._generate_speech, methods=["POST"])
 
     async def _generate_speech(self, post: AudioPost):
@@ -114,12 +111,6 @@ class OAIAudioRouter(BaseRouter):
             return Response(content=content, media_type=post.media_type())
 
 
-        except aiohttp.ClientError as e:
-            return error_constructor(
-                message=f"Failed to connect to inference service: {str(e)}",
-                error_type="connection_error",
-                status_code=503
-            )
         except Exception as e:
             return error_constructor(
                 message=f"Internal processing error: {str(e)}",

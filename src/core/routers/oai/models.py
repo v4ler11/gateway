@@ -232,3 +232,42 @@ class ChatCompletionsResponseStreaming(_ChatCompletionsResponse):
 
     def to_streaming(self) -> str:
         return str_to_streaming(self.model_dump_json())
+
+
+# === Transcriptions ===
+
+class TransRespDelta(BaseModel):
+    type: Literal["transcript.text.delta"]
+    delta: str
+
+
+class TransRespSegment(BaseModel):
+    type: Literal["transcript.text.segment"]
+    id: str # unique for every segment
+    start: float
+    end_float: float
+    text: str
+    speaker: Optional[str] = None
+
+    @staticmethod
+    def generate_id() -> str:
+        return f"seg_{secrets.token_hex(12)}"
+
+
+class TransUsageTokenDetails(BaseModel):
+    text_tokens: int
+    audio_tokens: int
+
+
+class TransUsage(BaseModel):
+    type: Literal["tokens"] = "tokens"
+    input_tokens: int
+    input_tokens_details: TransUsageTokenDetails
+    output_tokens: int
+    total_tokens: int
+
+
+class TransRespDone(BaseModel):
+    type: Literal["transcript.done"]
+    text: str
+    usage: Optional[TransUsage] = None
