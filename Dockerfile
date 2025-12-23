@@ -12,6 +12,7 @@ WORKDIR /app
 
 COPY pyproject.toml ./
 COPY scripts/ ./scripts/
+COPY assets/ ./assets/
 
 RUN uv venv /app/.venv
 RUN uv sync --no-dev --extra core --no-install-project

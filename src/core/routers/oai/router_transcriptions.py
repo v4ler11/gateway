@@ -4,31 +4,16 @@ from typing import List, AsyncGenerator
 from fastapi import UploadFile, File, Form
 from starlette.responses import StreamingResponse
 
+from core.routers.oai.models import TransRespDelta
 from core.routers.router_base import BaseRouter
 from core.routers.schemas import error_constructor
+from generated.stt_service import SpeechTranscription
 from models.definitions import ModelSTTAny
-from stt.client import stream_transcriptions_proto
-from stt.inference.ffmpeg import FfmpegDecoder
+from stt.client import stream_transcriptions
+from stt.inference.ffmpeg_utils import get_pcm_stream, file_to_stream
 
 
 SUPPORTED_EXTENSIONS = ["wav", "mp3", "ogg", "flac", "opus"]
-
-
-async def file_to_stream(file: UploadFile, chunk_size: int = 4096) -> AsyncGenerator[bytes, None]:
-    await file.seek(0)
-    while True:
-        chunk = await file.read(chunk_size)
-        if not chunk:
-            break
-        yield chunk
-
-
-async def get_pcm_stream(file_stream: AsyncGenerator[bytes, None]) -> AsyncGenerator[bytes, None]:
-    async with FfmpegDecoder(
-        input_stream=file_stream,
-    ) as stream:
-        async for chunk in stream:
-            yield chunk
 
 
 class OAIAudioTranscriptions(BaseRouter):
@@ -55,8 +40,13 @@ class OAIAudioTranscriptions(BaseRouter):
                 file_to_stream(file)
             )
 
-            async for chunk in stream_transcriptions_proto(a_model, pcm_stream):
-                yield chunk
+            async for resp in stream_transcriptions(
+                    a_model.config.container,
+                    a_model.record.model,
+                    pcm_stream
+            ):
+                if isinstance(resp, SpeechTranscription):
+                    yield TransRespDelta(delta=resp.text).to_streaming()
 
         a_model = next((m for m in self.models if m.record.resolve_name == model), None)
         if not a_model:

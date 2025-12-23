@@ -1,0 +1,37 @@
+FROM nvidia/cuda:12.9.1-cudnn-devel-ubuntu20.04
+
+
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
+
+ARG DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 python3-venv curl ffmpeg libgomp1 espeak-ng libsndfile1 git \
+    libnvinfer-plugin10 libnvinfer10 \
+    build-essential python3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY pyproject.toml uv.lock ./
+COPY assets/ ./assets/
+
+RUN uv venv /app/.venv
+RUN uv sync --no-dev --extra inf-stt --no-install-project
+
+COPY src/ ./src/
+COPY scripts/ ./scripts/
+COPY proto/ ./proto/
+
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv run scripts/gen_proto.py
+
+RUN uv sync --no-dev --extra inf-stt
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PATH="/app/.venv/bin:$PATH" \
+    UV_CACHE_DIR=/tmp/uv-cache
+
+EXPOSE 55001
+
+CMD ["inf_stt"]

@@ -1,6 +1,6 @@
 import asyncio
 
-import uvicorn
+import onnx_asr
 import uvloop
 
 from core import BASE_DIR
@@ -8,19 +8,43 @@ from core.logger import init_logger, info
 from models.config import Config, models_from_config
 from models.definitions import ModelSTTAny
 from stt.inference.grpc.server import grpc_server
-from stt.inference.rest.app import App
-from stt.inference.streaming_parakeet import load_global_model
+import onnxruntime as rt
+
 
 LOGS_DIR = BASE_DIR / "data" / "stt" / "logs"
 
 
-async def start_services(g_server, uvicorn_config):
-    http_server = uvicorn.Server(uvicorn_config)
+def patched_get_providers():
+    providers = rt.get_available_providers()
+    if 'TensorrtExecutionProvider' in providers:
+        providers.remove('TensorrtExecutionProvider')
+    return providers
 
-    info("Starting HTTP & gRPC servers...")
+
+def load_models():
+    rt.get_available_providers = patched_get_providers
+    sess_opts = rt.SessionOptions()
+
+    info(f"Loading nemo-parakeet-tdt-0.6b-v3...")
+    parakeet_model = onnx_asr.load_model(
+        "nemo-parakeet-tdt-0.6b-v3",
+        sess_options=sess_opts, providers=["CUDAExecutionProvider"]
+    )
+
+    info(f"Loading silero...")
+    vad_model = onnx_asr.load_vad(
+        "silero",
+        sess_options=sess_opts, providers=["CUDAExecutionProvider"]
+    )
+    info(f"Loading models OK")
+
+    return parakeet_model, vad_model
+
+
+async def start_services(g_server):
+    info("Starting gRPC server")
 
     await asyncio.gather(
-        http_server.serve(),
         g_server,
     )
 
@@ -36,23 +60,18 @@ def main():
     if len(models) > 1:
         raise RuntimeError("More than one TTS model is not supported")
 
-    p_model = load_global_model()
+    parakeet_model, vad_model = load_models()
 
-    app = App.new(models, p_model)
-    g_server = grpc_server(models, p_model)
+    g_server = grpc_server(
+        models=models,
+        parakeet_model=parakeet_model,
+        vad_model=vad_model,
+    )
 
     asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
-    uvicorn_config = uvicorn.Config(
-        app,
-        host="0.0.0.0",
-        port=models[0].config.port,
-        timeout_keep_alive=600,
-        log_config=None
-    )
-
     try:
-        asyncio.run(start_services(g_server, uvicorn_config))
+        asyncio.run(start_services(g_server))
     except KeyboardInterrupt:
         pass
 

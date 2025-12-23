@@ -237,12 +237,15 @@ class ChatCompletionsResponseStreaming(_ChatCompletionsResponse):
 # === Transcriptions ===
 
 class TransRespDelta(BaseModel):
-    type: Literal["transcript.text.delta"]
+    type: Literal["transcript.text.delta"] = "transcript.text.delta"
     delta: str
+
+    def to_streaming(self) -> str:
+        return str_to_streaming(self.model_dump_json())
 
 
 class TransRespSegment(BaseModel):
-    type: Literal["transcript.text.segment"]
+    type: Literal["transcript.text.segment"] = "transcript.text.segment"
     id: str # unique for every segment
     start: float
     end_float: float
@@ -268,6 +271,6 @@ class TransUsage(BaseModel):
 
 
 class TransRespDone(BaseModel):
-    type: Literal["transcript.done"]
+    type: Literal["transcript.done"] = "transcript.done"
     text: str
     usage: Optional[TransUsage] = None

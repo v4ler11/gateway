@@ -3,7 +3,7 @@ name = "gateway"
 version = "0.2.2"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.12, <3.14"
 dependencies = []
 
 [project.optional-dependencies]
@@ -27,6 +27,8 @@ core = [
     "requests>=2.32.5",
     "betterproto[compiler]>=2.0.0b6",
     "grpclib>=0.4.8",
+    "grpcio-tools>=1.62.0",
+    "python-multipart>=0.0.21",
 ]
 
 inf-llamacpp = [
@@ -41,15 +43,17 @@ inf-tts = [
 ]
 
 inf-stt = [
+    "gateway[core]",
     "torch>=2.9.1",
     "torchaudio>=2.9.1",
-    "nemo-toolkit[asr]>=2.1.0",
+    "onnx-asr[gpu, hub]>=0.9.1",
+#    "onnx>=1.17.0",
+#    "onnxruntime-gpu>=1.23.2"
 ]
 
 inference = [
     "gateway[inf-llamacpp]",
     "gateway[inf-tts]",
-    "gateway[inf-stt]",
 ]
 
 [dependency-groups]
@@ -60,6 +64,8 @@ dev = [
     "pyright>=1.1.407",
     "kokoro>=0.9.4",
     "jupyter>=1.1.1",
+    "onnx-asr[cpu, hub]>=0.9.1 ; sys_platform != 'linux'",
+    "onnx-asr[gpu, hub]>=0.9.1 ; sys_platform == 'linux'",
 ]
 
 [tool.uv.workspace]

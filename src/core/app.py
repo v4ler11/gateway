@@ -7,10 +7,10 @@ from fastapi import FastAPI
 from core.routers.oai.router_audio import OAIAudioRouter
 from core.routers.oai.router_chat_completions import OAIChatCompletionsRouter
 from core.routers.oai.router_models import OAIModelsRouter
+from core.routers.oai.router_transcriptions import OAIAudioTranscriptions
 from core.routers.router_base import BaseRouter
 from core.routers.router_models import ModelsRouter
-from models.definitions import ModelAny, ModelLLMAny
-from models.definitions import ModelTTSAny
+from models.definitions import ModelAny, ModelLLMAny, ModelSTTAny, ModelTTSAny
 
 
 __all__ = ["App"]
@@ -51,6 +51,7 @@ class App(FastAPI):
         return [
             BaseRouter(),
             ModelsRouter(models=self.models),
+
             # OAI Routers
             OAIModelsRouter(
                 models=[m for m in self.models if isinstance(m, ModelLLMAny)]
@@ -61,5 +62,8 @@ class App(FastAPI):
             ),
             OAIAudioRouter(
                 models=[m for m in self.models if isinstance(m, ModelTTSAny)],
+            ),
+            OAIAudioTranscriptions(
+                models=[m for m in self.models if isinstance(m, ModelSTTAny)],
             )
         ]

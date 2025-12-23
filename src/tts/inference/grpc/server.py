@@ -21,7 +21,7 @@ async def grpc_server(
             ]
     ) as server:
 
-        await server.start("0.0.0.0", 50051)
-        info("gRPC server started on 0.0.0.0:50051")
+        await server.start("0.0.0.0", 50101)
+        info("gRPC server started on 0.0.0.0:50101")
 
         await server.wait_closed()

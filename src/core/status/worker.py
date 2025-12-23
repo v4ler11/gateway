@@ -5,7 +5,7 @@ from typing import List, Callable, Awaitable
 
 import aiohttp
 
-from core.logger import error, info
+from core.logger import info, exception
 from core.status.models import TaskType, Task
 from core.abstract import Worker
 from models.definitions import ModelAny, ModelLLMAny, ModelTTSAny, ModelSTTAny
@@ -60,7 +60,7 @@ async def monitor_single_model(
         except Exception as e:
             err = str(e)
             model.status.error = err
-            error(f"MODEL {model.record.model}: {err}")
+            exception(f"MODEL {model.record.model}: {err}")
             if await smart_sleep(stop_event, 10.0):
                 break
 

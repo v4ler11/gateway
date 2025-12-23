@@ -1,9 +1,7 @@
-from functools import partial
 from typing import List
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict
 
-from stt.models.urls import URLsSTT
 
 
 class ModelRecordBase(BaseModel):
@@ -12,8 +10,6 @@ class ModelRecordBase(BaseModel):
     model: str
     resolve_name: str
     caps: List[str] = ["stt"]
-
-    urls: URLsSTT | partial = Field(default=partial(URLsSTT))
 
     @property
     def context_size(self) -> int:

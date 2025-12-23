@@ -1,119 +1,148 @@
-import torch
-import nemo.collections.asr as nemo_asr
+import asyncio
+import time
+
+from typing import AsyncIterator, AsyncGenerator, Any
+
 import numpy as np
-from typing import List, Any, Optional
-from pydantic import BaseModel
+
+from core.logger import error, info
+from stt.inference.schemas import ParakeetEvent, SpeechStart, SpeechStop, SpeechTranscription
 
 
-class WordStamp(BaseModel):
-    word: str
-    start: float
-    end: float
+def _check_silero_speech(vad_model: Any, chunk: np.ndarray, sample_rate: int) -> bool:
+    try:
+        out = vad_model(chunk, sample_rate)
+        if hasattr(out, 'item'):
+            prob = out.item()
+        else:
+            prob = out
+        return prob > 0.5
+    except Exception:
+        rms = np.sqrt(np.mean(chunk ** 2))
+        return rms > 0.01
 
 
-def load_global_model(model_name="nvidia/parakeet-tdt-0.6b-v3"):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = nemo_asr.models.ASRModel.from_pretrained(model_name=model_name)
-    model.freeze()
-    model.to(device)
-    model.eval()
+async def stream_parakeet_with_vad(
+        loop: asyncio.AbstractEventLoop,
+        audio_stream: AsyncIterator[np.ndarray],
+        model: Any,
+        vad_model: Any,
+        sample_rate: int = 16000,
+        min_silence_duration: float = 0.3,
+        max_duration: float = 180.0,
+) -> AsyncGenerator[ParakeetEvent, None]:
+    buffer = []
+    buffer_duration = 0.0
 
-    model.change_attention_model(
-        self_attention_model="rel_pos_local_attn",
-        att_context_size=[128, 0]
-    )
-    return model
+    is_speech_active = False
+    silence_counter = 0.0
 
+    vad_chunk_size = 512
+    vad_buffer = np.array([], dtype=np.float32)
 
-class StreamingParakeet:
-    def __init__(self, model: Any):
-        self.model = model
-        self.device = next(self.model.parameters()).device
+    async for chunk in audio_stream:
+        buffer.append(chunk)
 
-        subsampling_factor = self.model.encoder._cfg.subsampling_factor
-        self.frame_duration = 0.01 * subsampling_factor
+        chunk_duration = len(chunk) / sample_rate
+        buffer_duration += chunk_duration
 
+        vad_buffer = np.concatenate([vad_buffer, chunk])
 
-        self.cache = None
-        self.global_time_offset = 0.0
-        self.partial_word_tokens: List[int] = []
-        self.partial_word_start: Optional[float] = None
+        while len(vad_buffer) >= vad_chunk_size:
+            process_chunk = vad_buffer[:vad_chunk_size]
+            vad_buffer = vad_buffer[vad_chunk_size:]
 
+            is_speech = _check_silero_speech(vad_model, process_chunk, sample_rate)
 
-        self.reset_state()
+            if is_speech:
+                if not is_speech_active:
+                    yield SpeechStart()
 
-    def reset_state(self):
-        self.cache = None
-        self.global_time_offset = 0.0
+                is_speech_active = True
+                silence_counter = 0.0
+            else:
+                if is_speech_active:
+                    chunk_duration_vad = vad_chunk_size / sample_rate
+                    silence_counter += chunk_duration_vad
 
-        self.partial_word_tokens: List[int] = []
-        self.partial_word_start: Optional[float] = None
+        if buffer_duration >= max_duration:
+            if is_speech_active:
+                yield SpeechStop()
 
-    def transcribe_chunk(self, new_audio_chunk: np.array) -> List[WordStamp]:
-        audio_tensor = torch.tensor(new_audio_chunk, dtype=torch.float32).unsqueeze(0).to(self.device)
-        audio_length = torch.tensor([audio_tensor.shape[1]], dtype=torch.long).to(self.device)
+                full_audio = np.concatenate(buffer)
 
-        word_stamps: List[WordStamp] = []
+                process_audio = full_audio
 
-        with torch.no_grad():
-            processed_signal, processed_len, new_cache = self.model.encoder(
-                audio_signal=audio_tensor,
-                length=audio_length,
-                cache=self.cache
-            )
-            self.cache = new_cache
+                try:
+                    t0 = time.time()
+                    result = await loop.run_in_executor(None, model.recognize, process_audio)
+                    info(f"Inference took {time.time() - t0:.2f} seconds")
 
-            best_hyp = self.model.decoding.rnnt_decoder_predictions_tensor(
-                encoder_output=processed_signal,
-                encoded_lengths=processed_len,
-                return_hypotheses=True
-            )
+                    text = ""
+                    if isinstance(result, str):
+                        text = result.strip()
+                    elif hasattr(result, 'text') and result.text:
+                        text = result.text.strip()
 
-            hyp = best_hyp[0]
+                    if text:
+                        yield SpeechTranscription(text=text)
 
-            if hyp.y_sequence is not None and len(hyp.y_sequence) > 0:
-                token_ids = hyp.y_sequence.cpu().tolist()
-                timesteps = hyp.timestep
+                except Exception as e:
+                    error(f"Inference failed during force flush: {e}")
 
-                for i, token_id in enumerate(token_ids):
-                    token_str = self.model.tokenizer.ids_to_text([token_id])
+            buffer = []
+            buffer_duration = 0.0
+            is_speech_active = False
+            silence_counter = 0.0
 
-                    frame_index = timesteps[i] if i < len(timesteps) else 0
-                    token_time = (frame_index * self.frame_duration) + self.global_time_offset
+            continue
 
-                    is_new_word = token_str.startswith(" ")
+        if is_speech_active and silence_counter >= min_silence_duration:
+            yield SpeechStop()
 
-                    if is_new_word:
-                        if self.partial_word_tokens:
-                            full_word = self.model.tokenizer.ids_to_text(self.partial_word_tokens).strip()
-                            if full_word:
-                                word_stamps.append(WordStamp(
-                                    word=full_word,
-                                    start=round(self.partial_word_start, 3),
-                                    end=round(token_time, 3)
-                                ))
+            full_audio = np.concatenate(buffer)
+            buffer = []
+            buffer_duration = 0.0
+            is_speech_active = False
+            silence_counter = 0.0
 
-                        self.partial_word_tokens = [token_id]
-                        self.partial_word_start = token_time
-                    else:
-                        self.partial_word_tokens.append(token_id)
-                        if self.partial_word_start is None:
-                            self.partial_word_start = token_time
+            trim_samples = int((min_silence_duration - 0.1) * sample_rate)
+            if trim_samples > 0 and len(full_audio) > trim_samples:
+                process_audio = full_audio[:-trim_samples]
+            else:
+                process_audio = full_audio
 
-            chunk_duration = processed_len[0].item() * self.frame_duration
-            self.global_time_offset += chunk_duration
+            try:
+                result = await loop.run_in_executor(None, model.recognize, process_audio)
 
-            return word_stamps
+                text = ""
+                if isinstance(result, str):
+                    text = result.strip()
+                elif hasattr(result, 'text') and result.text:
+                    text = result.text.strip()
 
-    def finish(self) -> List[WordStamp]:
-        final_stamps = []
-        if self.partial_word_tokens:
-            full_word = self.model.tokenizer.ids_to_text(self.partial_word_tokens).strip()
-            if full_word:
-                final_stamps.append(WordStamp(
-                    word=full_word,
-                    start=round(self.partial_word_start, 3),
-                    end=round(self.global_time_offset, 3)
-                ))
-        self.reset_state()
-        return final_stamps
+                if text:
+                    yield SpeechTranscription(text=text)
+
+            except Exception as e:
+                error(f"Inference failed: {e}")
+
+    if buffer and is_speech_active:
+        yield SpeechStop()
+
+        full_audio = np.concatenate(buffer)
+
+        try:
+            result = await loop.run_in_executor(None, model.recognize, full_audio)
+
+            text = ""
+            if isinstance(result, str):
+                text = result.strip()
+            elif hasattr(result, 'text') and result.text:
+                text = result.text.strip()
+
+            if text:
+                yield SpeechTranscription(text=text)
+
+        except Exception as e:
+            error(f"Inference failed during final flush: {e}")

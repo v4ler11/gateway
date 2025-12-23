@@ -41,7 +41,7 @@ async def stream_audio_proto(
         model: ModelTTSAny,
         post: TTSAudioPost
 ):
-    async with Channel(model.config.container, model.config.port) as channel:
+    async with Channel(model.config.container, 50051) as channel: # todo: do not hardcode here
         stub = ProtoAudioStreamStub(channel)
 
         try:
