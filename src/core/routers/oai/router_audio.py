@@ -9,7 +9,7 @@ from core.routers.schemas import error_constructor
 from models.definitions import ModelTTSAny
 from starlette.responses import StreamingResponse, Response
 
-from tts.client import stream_audio_proto
+from tts.client import stream_audio
 from tts.inference.encode_audio_stream import encode_audio_stream
 from tts.inference.schemas import TTSAudioPost
 
@@ -71,7 +71,7 @@ class OAIAudioRouter(BaseRouter):
                     voice=post.voice,
                     speed=post.speed
                 )
-                async for audio_ in stream_audio_proto(model, a_post):
+                async for audio_ in stream_audio(model.config.container, a_post):
                     yield audio_
 
         async def streamer_encoded(stream: AsyncGenerator[bytes, None]):

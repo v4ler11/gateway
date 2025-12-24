@@ -36,13 +36,12 @@ async def task_worker(
 
     try:
         if task.task_type == TaskType.ping:
-            is_alive = await ping_stt(host)
+            is_alive, err = await ping_stt(host)
 
             if is_alive:
                 task.model.status.ping_ok = True
             else:
                 if loop.time() - t0 > STARTUP_TIME:
-                    err = "PING FAILED: gRPC returned non-ok status"
                     task.model.status.ping_ok = False
                     task.model.status.error = err
                     error(f"MODEL {model_name}: {err}")

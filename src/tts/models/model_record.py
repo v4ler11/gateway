@@ -1,9 +1,6 @@
-from functools import partial
 from typing import List
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
-
-from tts.models.urls import URLsKokoro
 
 
 class ModelRecordBase(BaseModel):
@@ -33,7 +30,6 @@ class ModelRecordKokoro(ModelRecordBase):
     files: List[str]
     voices: List[str]
     params: ParamsKokoro
-    urls: URLsKokoro | partial = Field(default=partial(URLsKokoro))
     constants: ConstantsKokoro = Field(default_factory=ConstantsKokoro)
 
     @property

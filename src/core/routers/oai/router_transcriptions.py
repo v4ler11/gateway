@@ -16,7 +16,7 @@ from stt.inference.ffmpeg_utils import get_pcm_stream, file_to_stream
 SUPPORTED_EXTENSIONS = ["wav", "mp3", "ogg", "flac", "opus"]
 
 
-class OAIAudioTranscriptions(BaseRouter):
+class OAIAudioTranscriptionsRouter(BaseRouter):
     def __init__(
             self,
             models: List[ModelSTTAny],

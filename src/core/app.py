@@ -3,11 +3,13 @@ from typing import List
 import aiohttp
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from core.routers.oai.router_audio import OAIAudioRouter
 from core.routers.oai.router_chat_completions import OAIChatCompletionsRouter
 from core.routers.oai.router_models import OAIModelsRouter
-from core.routers.oai.router_transcriptions import OAIAudioTranscriptions
+from core.routers.oai.router_transcriptions import OAIAudioTranscriptionsRouter
+from core.routers.oai.router_realtime import OAIRealtimeRouter
 from core.routers.router_base import BaseRouter
 from core.routers.router_models import ModelsRouter
 from models.definitions import ModelAny, ModelLLMAny, ModelSTTAny, ModelTTSAny
@@ -23,6 +25,15 @@ class App(FastAPI):
             *args, **kwargs
     ):
         super().__init__(*args, **kwargs)
+
+        self.add_middleware(
+            CORSMiddleware,
+            allow_origins=["*"],
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
+
         self.http_session: aiohttp.ClientSession
         self.models = models
         self.add_event_handler("startup", self._startup_events)
@@ -63,7 +74,11 @@ class App(FastAPI):
             OAIAudioRouter(
                 models=[m for m in self.models if isinstance(m, ModelTTSAny)],
             ),
-            OAIAudioTranscriptions(
+            OAIAudioTranscriptionsRouter(
                 models=[m for m in self.models if isinstance(m, ModelSTTAny)],
-            )
+            ),
+            OAIRealtimeRouter(
+                models=self.models,
+                http_session=self.http_session
+            ),
         ]

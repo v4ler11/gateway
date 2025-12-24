@@ -4,13 +4,13 @@ from kokoro import KPipeline
 from core.logger import warn, error
 
 from models.definitions import ModelTTSAny
-from generated.tts_audio import ProtoAudioStreamBase, ProtoResp, ProtoPost
+from generated.tts_audio import ProtoAudioBase, AudioResp, AudioPost, PingRequest, PingResponse
 from tts.inference.schemas import TTSAudioPost
-from tts.inference.stream_utils import audio_streamer
+from tts.inference.streaming_kokoro import stream_kokoro
 from tts.models import ModelRecordKokoro
 
 
-class ProtoAudioService(ProtoAudioStreamBase):
+class ProtoAudioService(ProtoAudioBase):
     def __init__(
             self,
             model: ModelTTSAny,
@@ -23,9 +23,9 @@ class ProtoAudioService(ProtoAudioStreamBase):
 
         self._pipeline = pipeline
 
-    async def stream_audio(self, proto_post: ProtoPost):
+    async def stream_audio(self, audio_post: AudioPost):
         try:
-            post = TTSAudioPost.from_proto(proto_post)
+            post = TTSAudioPost.from_proto(audio_post)
         except Exception as e:
             err = f"failed to validate post: {str(e)}"
             warn(err)
@@ -37,10 +37,13 @@ class ProtoAudioService(ProtoAudioStreamBase):
             raise GRPCError(Status.FAILED_PRECONDITION, err)
 
         try:
-            async for audio in audio_streamer(self._pipeline, post):
-                yield ProtoResp(data=audio)
+            async for audio in stream_kokoro(self._pipeline, post):
+                yield AudioResp(data=audio)
 
         except Exception as e:
             err = f"failed to stream audio: {str(e)}"
             error(err)
             raise GRPCError(Status.FAILED_PRECONDITION, err)
+
+    async def ping(self, ping_request: PingRequest) -> PingResponse:
+        return PingResponse(status="ok")

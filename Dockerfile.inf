@@ -40,7 +40,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev --extra inference --no-install-project
 
 COPY scripts/ ./scripts/
-COPY supervisord.conf /etc/supervisord.conf
+COPY supervisord.inf.conf /etc/supervisord.inf.conf
 
 COPY src/ ./src/
 COPY proto/ ./proto/
@@ -61,6 +61,6 @@ ENV PYTHONUNBUFFERED=1 \
     UV_CACHE_DIR=/tmp/uv-cache \
     LD_LIBRARY_PATH="/app:$LD_LIBRARY_PATH"
 
-EXPOSE 8001 8051
+EXPOSE 8001 50051
 
-CMD ["supervisord", "-c", "/etc/supervisord.conf"]
+CMD ["supervisord", "-c", "/etc/supervisord.inf.conf"]

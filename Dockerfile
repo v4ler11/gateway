@@ -7,7 +7,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
-
 WORKDIR /app
 
 COPY pyproject.toml ./
@@ -24,7 +23,6 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv run scripts/gen_proto.py
 
 RUN uv sync --no-dev --extra core
-RUN uv cache clean
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \

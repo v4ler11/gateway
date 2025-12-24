@@ -8,7 +8,7 @@ from core.logger import error
 from core.routers.oai.models import ChatCompletionsResponseStreaming, ChatDelta
 from core.routers.oai.sentence_collector import SentenceCollector
 from models.definitions import ModelTTSAny
-from tts.client import stream_audio_proto
+from tts.client import stream_audio
 from tts.inference.encode_audio_stream import encode_audio_stream
 from tts.inference.schemas import TTSAudioPost
 
@@ -107,7 +107,7 @@ async def stream_with_chat_synthesised(
 
                 a_post_clone = a_post.model_copy(update={"text": full_text})
 
-                audio_iterator = stream_audio_proto(tts_model, a_post_clone).__aiter__()
+                audio_iterator = stream_audio(tts_model.config.container, a_post_clone).__aiter__()
 
                 while True:
                     try:

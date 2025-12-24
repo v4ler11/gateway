@@ -18,7 +18,7 @@ core = [
     "tokenizers>=0.22.1",
     "transformers>=4.57.3",
     "safetensors>=0.7.0",
-    "uvicorn>=0.38.0",
+    "uvicorn[standard]>=0.38.0",
     "uvloop>=0.22.1",
     "ujson>=5.11.0",
     "soundfile>=0.13.1",
@@ -29,6 +29,7 @@ core = [
     "grpclib>=0.4.8",
     "grpcio-tools>=1.62.0",
     "python-multipart>=0.0.21",
+    "websockets>=15.0.1",
 ]
 
 inf-llamacpp = [

@@ -1,5 +1,5 @@
 import asyncio
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Tuple
 
 import betterproto
 from grpclib import GRPCError
@@ -17,7 +17,7 @@ from generated.stt_service import (
 from stt.globals import GRPC_PORT
 
 
-async def ping_stt(host: str) -> bool:
+async def ping_stt(host: str) -> Tuple[bool, str | None]:
     async with Channel(host, GRPC_PORT) as channel:
         stub = ProtoTranscribeStub(channel)
 
@@ -26,11 +26,10 @@ async def ping_stt(host: str) -> bool:
                 stub.ping(PingRequest()),
                 timeout=1.0
             )
-            return response.status == "ok"
+            return response.status == "ok", None
 
         except Exception as e:
-            print(f"Ping failed: {e}")
-            return False
+            return False, f"ping failed: {str(e)}"
         
 
 async def stream_transcriptions(
