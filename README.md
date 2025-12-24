@@ -1,92 +1,78 @@
-# Gateway
+# Gateway: Local Voice-to-Voice AI Assistant
+#### A latency-optimized, distributed audio pipeline implementing VAD + STT + LLM + TTS with an OpenAI-compatible API.
 
-# Usage
+**[Documentation](#Documentation)** | **[Architecture](#Architecture)** | **[Demo](#Demo)** | **[Usage](#Usage)** | **[Roadmap](#Roadmap)** | **[Motivation](#Motivation)**
+
+### Features
+- Async-rich latency-optimized audio-to-audio AI Assistant (VAD + STT + LLM + TTS)
+- Exposing OpenAI-compatible endpoints for all running models (REST, Websockets)
+- Launching models on-demand using YAML config file
+- Distributed architecture (run models on different nodes)
+- gRPC for communication between containers
+- OpenWebUI on-demand
+
+
+### Documentation
+- **[README -- Development](README.dev.md)**
+- **[README -- API Usage](README.api.md)**
+- **[README -- Architecture](README.arch.md)**
+
+### Architecture
+###HERE BE DRAGONS
+
+
+## Demo
+#### HERE BE DRAGONS
+
+## Usage
+
+### Prerequisites
+- Linux machine
+- NVIDIA GPU, min 24GB VRAM, CUDA 12 or higher
+- Installed docker, docker compose, Nvidia container toolkit (ctk). See [guide.md](assets/docs/docker-docker-compose-ctl.md) to install
 
 1. Clone the repository
-```shell
-git clone https://app.git.valerii.cc/valerii/gateway.git
-cd gateway
-```
+    ```sh
+    git clone https://app.git.valerii.cc/valerii/gateway.git
+    cd gateway
+    ```
 
-## Baremetal
+2. Use config.yaml to configure running models \
+**Note:** default config should suffice
+    ```sh
+    cp config.example.yaml config.yaml
+    ```
 
-2. Install [uv](https://github.com/astral-sh/uv)
-```sh
-curl -LsSf https://astral.sh/uv/install.sh | sh
-uv --version
-```
+3. Build Images
+    ```sh
+    sh run.dev.sh
+    ```    
 
-3. Install package & deps
-```sh
-uv venv
-uv sync --extra core
-```
+4. Start Containers 
+    ```sh
+    docker compose up -d
+    ```
 
-4. Run the Service
-```sh
-uv run core
-```
+5. Navigate to [http://localhost:8000/docs](http://localhost:8000/docs) to access API documentation
+![scalar.png](assets/screenshots/scalar.png)
 
-## Docker
+## Roadmap
+### HERE BE DRAGONS
 
-2. Ensure you have docker, docker compose installed
-```sh
-docker --version && docker compose version
-```
-Help: consult [How to install docker, docker compose, ctk](assets/docs/docker-docker-compose-ctl.md)
+## Motivation
 
-3. Build an Image and start container
-```sh
-docker compose up -d
-```
+As many other kids, watching and re-watching Iron Man movies I was captivated with an idea of having my own Jarvis someday.
 
-# Development
+Inspired of it or maybe something else, I chose a route of AI Engineer. Having played a founding engineering role in 2 startups already (as of 24 Dec '25), I decided to give my idea a shot.
 
-1. Install the package as in baremetal section
-2. Switch to development profile
-```sh
-uv sync --dev
-```
+Then I wondered, what are the SOTA open-weights models as of today, fast enough for seamless real-time communication would enable this.
+I collected them all: Silero VAD, Parakeet V3 (STT), GPT-OSS-20B (LLM), and Kokoro (TTS) under one backend to figure how would I put them together into one audio-to-audio AI assistant pipeline.
+If it performed well enough, I could've been delegating some mundane simple tasks vocally. 
 
-### Adding/ Removing packages
-```sh
-uv add requests --optional core
-uv remove request --optional core
-```
-or adding to a group e.g., development
-```sh
-uv add requests --dev
-uv remove requests --dev
-```
+As of today I have 2 proxmox nodes as my homelab, and how cool would it be to see an AI assistant could interact with it, -- thought I, outlining architecture of the Gateway. \
+It could access the books I own, see movies I binge-watched during the weekend, access my self-hosted email and calendar, and draft replies to emails. Truly an unlimited power.
 
-### Upgrading a version
-1. Bump up version in `pyproject.toml`
-2. Execute
-```sh
-git tag v0.1.4
-git push origin v0.1.4
-```
-Note: GH actions will automatically create and publish an image based on the tag
+As of this project, it is a prototype I built to see, realistically, to what degree could I've minimized latency. 
+I was really interested to see how would I approach and an architectural problem of sticking this many different models. 
 
-### Development tools
-
-#### Pyright -- Static Type Checker
-```sh
-uv run pyright
-```
-
-#### Testing
-Run all the tests
-```sh
-uv run pytest
-```
-
-Show all testing markers 
-```sh
-uv run pytest --markers | head -1
-```
-
-Run tests assigned to a marker
-```sh
-uv run pytest -m "marker"
-```
+Nearly 1 month later I like what I see. The current version of assistant interrupts me, does not let interrupt itself, spins off into languishing monologues, but it's standing on a solid foundation.

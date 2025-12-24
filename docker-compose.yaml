@@ -1,0 +1,89 @@
+services:
+  gat-core:
+    image: gat-core:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gat-core
+    restart: unless-stopped
+    tty: false
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./config.yaml:/app/config.yaml:ro
+      - ./.models-cache:/app/.models-cache
+    networks:
+      - gateway-network
+
+  gat-inf:
+    image: gat-inf:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.inf
+    container_name: gat-inf
+    restart: unless-stopped
+    tty: false
+    environment:
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    expose:
+      - 55001
+      - 8001
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    volumes:
+      - ./data:/app/data
+      - ./.models-cache:/app/.models-cache
+      - ./config.yaml:/app/config.yaml:ro
+    networks:
+      - gateway-network
+
+  gat-stt:
+    image: gat-stt:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.stt
+    container_name: gat-stt
+    restart: unless-stopped
+    tty: false
+    environment:
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    expose:
+      - 55001
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    volumes:
+      - ./data:/app/data
+      - ./.models-cache:/app/.models-cache
+      - ./config.yaml:/app/config.yaml:ro
+    networks:
+      - gateway-network
+
+
+#  open-webui:
+#    image: ghcr.io/open-webui/open-webui:main
+#    container_name: open-webui
+#    restart: unless-stopped
+#    ports:
+#      - "8080:8080"
+#    environment:
+#      - OPENAI_API_BASE_URL=http://gat-core:8000/oai/v1
+#      - WEBUI_AUTH=False
+#    volumes:
+#      - ./openwebui:/app/backend/data
+#    networks:
+#      - gateway-network
+
+networks:
+  gateway-network:
+    driver: bridge
