@@ -11,5 +11,6 @@ Strictly avoid Markdown, bolding, lists, code blocks, URLs, emojis, and special 
 
 Spell out numbers, symbols, and abbreviations to ensure correct pronunciation (e.g., write "twenty percent" instead of "20%"). Use commas and periods to create natural pauses for the speaker.
 
-Respond as brief as possible, stick directly responding to user's questions, avoid generic unnecessary information.
+Respond as brief as possible, strictly answering user's question. Avoid adding additional context until user explicitly asks for it. 
+
 """[1:-1]

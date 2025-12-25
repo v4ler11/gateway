@@ -16,7 +16,7 @@ from core.routers.oai.models import (
     ChatCompletionsResponseChoiceStreaming, ChatDelta, AudioResponse, ChatMessageSystem
 )
 from core.routers.oai.schemas import ChatPost, ChatPostAudio
-from core.routers.oai.utils import limit_messages
+from core.routers.oai.utils import limit_messages, try_resolve_models
 from core.routers.router_base import BaseRouter
 from core.routers.schemas import error_constructor
 from llm.client import stream_with_chat
@@ -102,77 +102,10 @@ class OAIChatCompletionsRouter(BaseRouter):
         self.http_session = http_session
         self.add_api_route(f"/oai/v1/chat/completions", self._chat_completions, methods=["POST"])
 
-    def _try_resolve_post_models(self, post: ChatPost) -> ResolvedModels | Response:
-        requested_names = [m.strip() for m in post.model.split("+") if m.strip()]
-        available_models = {m.record.resolve_name: m for m in self.models}
-
-        resolved_llms = []
-        resolved_tts = []
-
-        for name in requested_names:
-            model = available_models.get(name)
-
-            if not model:
-                return error_constructor(
-                    message=f"Model '{name}' not found",
-                    error_type="model_not_found",
-                    status_code=404
-                )
-            if not model.status.running:
-                return error_constructor(
-                    message=f"Model '{name}' is not running",
-                    error_type="model_not_running",
-                    status_code=400
-                )
-
-            info(f"Model name resolve {name} -> {model.record.model}")
-
-            if isinstance(model, ModelLLMAny):
-                resolved_llms.append(model)
-            elif isinstance(model, ModelTTSAny):
-                resolved_tts.append(model)
-            else:
-                return error_constructor(
-                    message=f"Model type '{type(model)}' is not supported",
-                    error_type="server_error",
-                    status_code=500
-                )
-
-        if not resolved_llms:
-            return error_constructor(
-                message="LLM is required for chat/completions",
-                error_type="validation_error",
-                status_code=422
-            )
-
-        if len(resolved_llms) > 1:
-            return error_constructor(
-                message=f"Only one LLM is allowed, got: {[m.record.resolve_name for m in resolved_llms]}",
-                error_type="validation_error",
-                status_code=422
-            )
-        if len(resolved_tts) > 1:
-            return error_constructor(
-                message=f"Only one TTS model is allowed, got: {[m.record.resolve_name for m in resolved_tts]}",
-                error_type="validation_error",
-                status_code=422
-            )
-
-        if "audio" in post.modalities and not resolved_tts:
-            return error_constructor(
-                message="TTS model is required for chat/completions if 'audio' is in modalities",
-                error_type="validation_error",
-                status_code=422
-            )
-
-        return ResolvedModels(
-            llm=resolved_llms[0],
-            tts=resolved_tts[0] if resolved_tts else None
-        )
-
     async def _chat_completions(self, post: ChatPost):
         async def chat_completions_streamer() -> AsyncGenerator[str, None]:
             assert r_models is not None
+            assert r_models.llm is not None
 
             chat_post.consume_sampling_params(r_models.llm.sampling_params)
 
@@ -250,10 +183,22 @@ class OAIChatCompletionsRouter(BaseRouter):
                     raise ValueError("Voice modality is only supported with stream=True due to latency constraints.")
 
         try:
-            r_models_mb = self._try_resolve_post_models(post)
-            if isinstance(r_models_mb, Response):
-                return r_models_mb
+            r_models_mb = try_resolve_models(post.model, self.models)
+            if isinstance(r_models_mb, str):
+                return error_constructor(
+                    message=f"Failed to resolve model: {r_models_mb}",
+                    error_type="model_not_found",
+                    status_code=422
+                )
+
+
             r_models = r_models_mb
+            if not r_models.llm:
+                return error_constructor(
+                    message=f"LLM model must be provided",
+                    error_type="validation_error",
+                    status_code=422
+                )
 
             messages = include_system_if_needed(post, r_models.llm)
 

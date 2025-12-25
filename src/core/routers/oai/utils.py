@@ -1,9 +1,17 @@
 import secrets
-from typing import Iterable, Any, Dict, List
+from dataclasses import dataclass
+from typing import Iterable, Any, Dict, List, Optional
 
 from core.logger import info
 from core.routers.oai.models import ChatMessage, ChatMessageSystem
-from llm.models.models import ModelAny
+from models.definitions import ModelLLMAny, ModelTTSAny, ModelSTTAny, ModelAny
+
+
+@dataclass
+class ResolvedModels:
+    llm: Optional[ModelLLMAny]
+    tts: Optional[ModelTTSAny]
+    stt: Optional[ModelSTTAny]
 
 
 def generate_chat_completion_id(prefix: str) -> str:
@@ -63,3 +71,37 @@ def convert_messages_to_chat_format(
             raise NotImplementedError(f"Message of type `{type(m)}` does not have conversion to chat format")
 
     return results
+
+
+def try_resolve_models(model_name: str, models: List[Any]) -> ResolvedModels | str:
+    requested_names = [m.strip() for m in model_name.split("+") if m.strip()]
+    available_models = {m.record.resolve_name: m for m in models}
+
+    resolved_models = {"llm": [], "tts": [], "stt": []}
+
+    for name in requested_names:
+        if not (model := available_models.get(name)):
+            return f"Model {name} is not available"
+
+        if not model.status.running:
+            return f"Model {name} is not running"
+
+        info(f"Model name resolve {name} -> {model.record.model}")
+
+        if isinstance(model, ModelLLMAny):
+            resolved_models["llm"].append(model)
+        elif isinstance(model, ModelTTSAny):
+            resolved_models["tts"].append(model)
+        elif isinstance(model, ModelSTTAny):
+            resolved_models["stt"].append(model)
+        else:
+            raise ValueError(f"Unknown model type {type(model)}")
+
+    if len(resolved_models["llm"]) > 1 or len(resolved_models["tts"]) > 1 or len(resolved_models["stt"]) > 1:
+        return f"Only one of each: LLM, TTS, or STT models can be specified"
+
+    return ResolvedModels(
+        llm=resolved_models["llm"][0] if resolved_models["llm"] else None,
+        tts=resolved_models["tts"][0] if resolved_models["tts"] else None,
+        stt=resolved_models["stt"][0] if resolved_models["stt"] else None,
+    )
