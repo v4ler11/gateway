@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+
+package stt_service;
+
+
+service ProtoTranscribe {
+    rpc Transcribe (stream TranscribePost) returns (stream TranscribeResp) {}
+
+    rpc Ping (PingRequest) returns (PingResponse) {}
+}
+
+message TranscribeStreamingConfig {
+    string model = 1;
+}
+
+message TranscribePost {
+    oneof streaming_request {
+        TranscribeStreamingConfig config = 1;
+        bytes audio = 2;
+    }
+}
+
+message TranscribeResp {
+    oneof output_event {
+        SpeechStart speech_start = 1;
+        SpeechStop speech_stop = 2;
+        SpeechTranscription speech_transcription = 3;
+    }
+}
+
+message SpeechStart {
+    float timestamp = 1;
+}
+
+message SpeechStop {
+    float timestamp = 1;
+}
+
+message SpeechTranscription {
+    string text = 1;
+    float timestamp = 2;
+}
+
+message PingRequest {
+}
+
+message PingResponse {
+    string status = 1;
+}

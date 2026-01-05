@@ -1,0 +1,66 @@
+FROM nvidia/cuda:13.0.2-devel-ubuntu24.04 AS builder
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y \
+    git build-essential cmake curl libcurl4-openssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+
+RUN git clone https://github.com/ggerganov/llama.cpp.git .
+
+RUN ln -s /usr/local/cuda/lib64/stubs/libcuda.so /usr/local/cuda/lib64/stubs/libcuda.so.1 \
+    && echo "/usr/local/cuda/lib64/stubs" > /etc/ld.so.conf.d/cuda-stubs.conf \
+    && ldconfig \
+    && cmake -B build \
+    -DGGML_CUDA=ON \
+    -DGGML_NATIVE=ON \
+    -DCMAKE_CUDA_ARCHITECTURES=120 \
+    -DCMAKE_BUILD_TYPE=Release \
+    && cmake --build build --config Release -j$(nproc)
+
+FROM nvidia/cuda:13.0.2-runtime-ubuntu24.04
+
+COPY --from=builder /build/build/bin/llama-server /app/llama-server
+COPY --from=builder /build/build/bin/llama-cli /app/llama-cli
+COPY --from=builder /build/build/bin/*.so* /app/
+
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 python3-venv curl ffmpeg libgomp1 espeak-ng libsndfile1 git \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY pyproject.toml uv.lock ./
+
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv venv /app/.venv && \
+    uv sync --frozen --no-dev --extra inference --no-install-project
+
+COPY scripts/ ./scripts/
+COPY supervisord.inf.conf /etc/supervisord.inf.conf
+
+COPY src/ ./src/
+COPY proto/ ./proto/
+
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv run scripts/gen_proto.py
+
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev --extra inference
+
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv pip install supervisor pip
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PATH="/app/.venv/bin:$PATH" \
+    PYTHONPATH="${PYTHONPATH}:/app" \
+    UV_CACHE_DIR=/tmp/uv-cache \
+    LD_LIBRARY_PATH="/app:$LD_LIBRARY_PATH"
+
+EXPOSE 8001 50051
+
+CMD ["supervisord", "-c", "/etc/supervisord.inf.conf"]

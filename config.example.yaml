@@ -1,0 +1,13 @@
+models:
+  - model: gpt-oss-20b
+    backend: llamacpp
+    container: gat-inf
+    port: 8001
+
+  - model: kokoro
+    backend: kokoro
+    container: gat-inf
+
+  - model: parakeet
+    backend: parakeet
+    container: gat-stt

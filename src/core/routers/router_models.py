@@ -1,0 +1,81 @@
+import time
+from typing import Literal, List, Optional
+
+from pydantic import BaseModel
+from starlette import status
+
+from core.routers.router_base import BaseRouter
+from core.routers.schemas import ErrorResponse, error_constructor
+from models.definitions import ModelAny
+
+
+class ModelStatus(BaseModel):
+    ping_ok: bool
+    request_ok: bool
+    error: Optional[str]
+    running: bool
+
+
+class ModelResponse(BaseModel):
+    id: str
+    caps: List[str]
+    object: Literal["model"] = "model"
+    created: int
+    status: ModelStatus
+
+
+class ModelsResponse(BaseModel):
+    object: Literal["list"] = "list"
+    data: List[ModelResponse]
+
+
+class ModelsRouter(BaseRouter):
+    def __init__(
+            self,
+            models: List[ModelAny],
+            *args, **kwargs
+    ):
+        super().__init__(*args, **kwargs)
+        self.models = models
+
+        self.add_api_route(
+            "/v0/models",
+            self._models,
+            methods=["GET"],
+            status_code=status.HTTP_200_OK,
+            responses={
+                200: dict(
+                    description="Returns a list of models",
+                    model=ModelsResponse
+                ),
+                500: dict(
+                    description="Internal server error",
+                    model=ErrorResponse,
+                ),
+            }
+        )
+
+    async def _models(self):
+        try:
+            return ModelsResponse(
+                data=[
+                    ModelResponse(
+                        id=m.record.resolve_name,
+                        caps=m.record.caps,
+                        created=int(time.time()),
+                        status=ModelStatus(
+                            ping_ok=m.status.ping_ok,
+                            request_ok=m.status.request_ok,
+                            error=m.status.error,
+                            running=m.status.running
+                        ),
+                    )
+                    for m in self.models
+                ]
+            )
+        except Exception as e:
+            return error_constructor(
+                message=f"Internal server error: {str(e)}",
+                error_type="internal_server_error",
+                status_code=500
+            )

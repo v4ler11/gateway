@@ -1,92 +1,61 @@
-# Gateway
+# Gateway: Local Voice-to-Voice AI Assistant
+#### A latency-optimized, distributed audio pipeline implementing VAD + STT + LLM + TTS with an OpenAI-compatible API.
 
-# Usage
+**[Documentation](#Documentation)** | **[Architecture](#Architecture)** | **[Demo](#Demo)** | **[Usage](#Usage)** | **[Roadmap](#Roadmap)**
+
+### Features
+- Async-rich latency-optimized voice-to-voice AI Assistant (VAD + STT + LLM + TTS)
+- Real-time voice-to-voice, ability to interrupt what assistant says
+- Exposing OpenAI-compatible endpoints for all running models (REST, Websockets)
+- Launching models on-demand using YAML config file
+- Distributed architecture (run models on different nodes)
+- gRPC for communication between containers
+- OpenWebUI on-demand
+
+
+### Documentation
+- **[README -- Development](README.dev.md)**
+
+### Architecture
+
+![High Level Architecture](assets/screenshots/arch_highlev.png)
+
+![Inference Pipeline Architecture](assets/screenshots/inference_pipeline.png)
+
+## Demo
+#### HERE BE DRAGONS
+
+## Usage
+
+### Prerequisites
+- Linux machine
+- NVIDIA GPU, min 22Gb VRAM, CUDA 12 or higher
+- Installed docker, docker compose, Nvidia container toolkit (ctk). See [guide.md](assets/docs/docker-docker-compose-ctl.md) to install
 
 1. Clone the repository
-```shell
-git clone https://app.git.valerii.cc/valerii/gateway.git
-cd gateway
-```
+    ```sh
+    git clone https://app.git.valerii.cc/valerii/gateway.git
+    cd gateway
+    ```
 
-## Baremetal
+2. Use config.yaml to configure running models \
+**Note:** default config should suffice
+    ```sh
+    cp config.example.yaml config.yaml
+    ```
 
-2. Install [uv](https://github.com/astral-sh/uv)
-```sh
-curl -LsSf https://astral.sh/uv/install.sh | sh
-uv --version
-```
+3. Build Images
+    ```sh
+    sh run.dev.sh
+    ```    
 
-3. Install package & deps
-```sh
-uv venv
-uv sync --extra core
-```
+4. Start Containers 
+    ```sh
+    docker compose up -d
+    ```
 
-4. Run the Service
-```sh
-uv run core
-```
+5. Navigate to [http://localhost:8000/docs](http://localhost:8000/docs) to access API documentation
+![scalar.png](assets/screenshots/scalar.png)
 
-## Docker
-
-2. Ensure you have docker, docker compose installed
-```sh
-docker --version && docker compose version
-```
-Help: consult [How to install docker, docker compose, ctk](assets/docs/docker-docker-compose-ctl.md)
-
-3. Build an Image and start container
-```sh
-docker compose up -d
-```
-
-# Development
-
-1. Install the package as in baremetal section
-2. Switch to development profile
-```sh
-uv sync --dev
-```
-
-### Adding/ Removing packages
-```sh
-uv add requests --optional core
-uv remove request --optional core
-```
-or adding to a group e.g., development
-```sh
-uv add requests --dev
-uv remove requests --dev
-```
-
-### Upgrading a version
-1. Bump up version in `pyproject.toml`
-2. Execute
-```sh
-git tag v0.1.4
-git push origin v0.1.4
-```
-Note: GH actions will automatically create and publish an image based on the tag
-
-### Development tools
-
-#### Pyright -- Static Type Checker
-```sh
-uv run pyright
-```
-
-#### Testing
-Run all the tests
-```sh
-uv run pytest
-```
-
-Show all testing markers 
-```sh
-uv run pytest --markers | head -1
-```
-
-Run tests assigned to a marker
-```sh
-uv run pytest -m "marker"
-```
+## Roadmap
+### HERE BE DRAGONS

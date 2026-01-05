@@ -3,40 +3,98 @@ name = "gateway"
 version = "0.2.2"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.12, <3.14"
 dependencies = []
 
 [project.optional-dependencies]
 core = [
+    "aiohttp>=3.13.2",
     "fastapi>=0.121.3",
+    "huggingface-hub<=1",
     "pydantic>=2.12.4",
+    "pyyaml>=6.0.3",
     "scalar-fastapi>=1.4.4",
     "termcolor>=3.2.0",
-    "uvicorn>=0.38.0",
+    "tokenizers>=0.22.1",
+    "transformers>=4.57.3",
+    "safetensors>=0.7.0",
+    "uvicorn[standard]>=0.38.0",
     "uvloop>=0.22.1",
+    "ujson>=5.11.0",
+    "soundfile>=0.13.1",
+    "numpy>=2.3.5",
+    "pysbd>=0.3.4",
+    "requests>=2.32.5",
+    "betterproto[compiler]>=2.0.0b6",
+    "grpclib>=0.4.8",
+    "grpcio-tools>=1.62.0",
+    "python-multipart>=0.0.21",
+    "websockets>=15.0.1",
+]
+
+inf-llamacpp = [
+    "gateway[core]",
+]
+
+inf-tts = [
+    "gateway[core]",
+    "kokoro>=0.9.4",
+    "torch>=2.9.1",
+    "torchaudio>=2.9.1",
+]
+
+inf-stt = [
+    "gateway[core]",
+    "torch>=2.9.1",
+    "torchaudio>=2.9.1",
+    "onnx-asr[gpu, hub]>=0.9.1",
+#    "onnx>=1.17.0",
+#    "onnxruntime-gpu>=1.23.2"
+]
+
+inference = [
+    "gateway[inf-llamacpp]",
+    "gateway[inf-tts]",
 ]
 
 [dependency-groups]
 dev = [
     "gateway[core]",
-    "ruff>=0.14.6",
+    "ruff>=0.14.7",
     "pytest>=9.0.1",
     "pyright>=1.1.407",
+    "kokoro>=0.9.4",
+    "jupyter>=1.1.1",
+    "onnx-asr[cpu, hub]>=0.9.1 ; sys_platform != 'linux'",
+    "onnx-asr[gpu, hub]>=0.9.1 ; sys_platform == 'linux'",
 ]
 
 [tool.uv.workspace]
 members = [
     "src/core",
+    "src/models",
+    "src/hf",
+    "src/llm",
+    "src/tts",
+    "src/stt",
 ]
 
 [tool.uv.sources]
 core = { workspace = true }
+models = { workspace = true }
+hf = { workspace = true }
+llm = { workspace = true }
+tts = { workspace = true }
+stt = { workspace = true }
 
 [tool.uv]
 package = true
 
 [project.scripts]
 serve = "core.main:main"
+inf_llamacpp = "llm.inference.llamacpp:main"
+inf_tts = "tts.inference.main:main"
+inf_stt = "stt.inference.main:main"
 
 [tool.pytest.ini_options]
 markers = []
@@ -50,3 +108,9 @@ addopts = [
     "-v",
 ]
 asyncio_mode = "auto"
+
+[tool.pyright]
+ignore = [
+    "src/generated",
+    "src/stt/inference/streaming_parakeet.py",
+]
