@@ -1,7 +1,8 @@
 # Gateway: Local Voice-to-Voice AI Assistant
 #### A latency-optimized, distributed audio pipeline implementing VAD + STT + LLM + TTS with an OpenAI-compatible API.
+**[Documentation](#Documentation)** | **[Architecture](#Architecture)** | **[Demo](#Demo)** | **[Usage](#Usage)** | **[Roadmap](#Roadmap)** 
 
-**[Documentation](#Documentation)** | **[Architecture](#Architecture)** | **[Demo](#Demo)** | **[Usage](#Usage)** | **[Roadmap](#Roadmap)**
+Note: this Repository is a mirror. Original Repository is being developed and store in my local Forgejo instance
 
 ### Features
 - Async-rich latency-optimized voice-to-voice AI Assistant (VAD + STT + LLM + TTS)
