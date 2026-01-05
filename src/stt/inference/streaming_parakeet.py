@@ -28,7 +28,7 @@ async def stream_parakeet_with_vad(
         model: Any,
         vad_model: Any,
         sample_rate: int = 16000,
-        min_silence_duration: float = 0.5,
+        min_silence_duration: float = 0.3,
         max_duration: float = 180.0,
 ) -> AsyncGenerator[ParakeetEvent, None]:
     buffer = []

@@ -1,3 +1,4 @@
+import time
 import asyncio
 from typing import List, AsyncGenerator, Tuple
 
@@ -12,14 +13,13 @@ from core.routers.oai.models import ChatMessageUser, ChatMessageSystem, ChatMess
 from core.routers.oai.schemas import ChatPost
 from core.routers.oai.utils import limit_messages, try_resolve_models, ResolvedModels
 from core.routers.router_base import BaseRouter
-from generated.stt_service import SpeechTranscription
+from generated.stt_service import SpeechTranscription, SpeechStop
 from llm.client import stream_with_chat
 from llm.models.prompts import LLM_TTS_PROMPT
 from stt.client import stream_transcriptions
 from stt.inference.ffmpeg_utils import get_pcm_stream
 from models.definitions import ModelAny
 from tts.inference.schemas import TTSAudioPost
-
 
 BYTES_PER_SECOND = int(24000 * 1 * 4 * 1.3)
 AUDIO_CHUNK_SIZE = 65_536 + 32_768
@@ -93,6 +93,8 @@ class OAIRealtimeRouter(BaseRouter):
         interrupt_event = asyncio.Event()
         current_turn_id = 0
 
+        turn_start_times: dict[int, float] = {}
+
         async def websocket_stream_adapter() -> AsyncGenerator[bytes, None]:
             try:
                 async for chunk in websocket.iter_bytes():
@@ -116,10 +118,14 @@ class OAIRealtimeRouter(BaseRouter):
                         r_models.stt.record.model,
                         get_pcm_stream(websocket_stream_adapter())
                 ):
+                    if isinstance(stt_resp, SpeechStop):
+                        current_turn_id += 1
+                        turn_start_times[current_turn_id] = time.perf_counter()
+                        continue
+
                     if not isinstance(stt_resp, SpeechTranscription):
                         continue
 
-                    current_turn_id += 1
                     interrupt_event.set()
 
                     info(f"USER SAYS: {stt_resp.text}")
@@ -183,6 +189,8 @@ class OAIRealtimeRouter(BaseRouter):
                 messages.append(ChatMessageAssistant(content=content))
 
         async def run_ws_sender():
+            last_sent_turn_id = -1
+
             try:
                 while True:
                     item = await audio_output_queue.get()
@@ -193,6 +201,17 @@ class OAIRealtimeRouter(BaseRouter):
 
                     if turn_id != current_turn_id:
                         continue
+
+                    if turn_id > last_sent_turn_id:
+                        t1 = time.perf_counter()
+                        t0 = turn_start_times.get(turn_id)
+
+                        if t0:
+                            latency_ms = (t1 - t0) * 1000
+                            info(f"LATENCY [Turn {turn_id}]: {latency_ms:.2f}ms")
+                            del turn_start_times[turn_id]
+
+                        last_sent_turn_id = turn_id
 
                     await websocket.send_bytes(audio_chunk)
                     await pace_audio(len(audio_chunk))
