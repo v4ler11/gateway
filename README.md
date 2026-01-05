@@ -5,6 +5,7 @@
 
 ### Features
 - Async-rich latency-optimized voice-to-voice AI Assistant (VAD + STT + LLM + TTS)
+- Real-time voice-to-voice, ability to interrupt what assistant says
 - Exposing OpenAI-compatible endpoints for all running models (REST, Websockets)
 - Launching models on-demand using YAML config file
 - Distributed architecture (run models on different nodes)
@@ -14,12 +15,12 @@
 
 ### Documentation
 - **[README -- Development](README.dev.md)**
-- **[README -- API Usage](README.api.md)**
-- **[README -- Architecture](README.arch.md)**
 
 ### Architecture
-###HERE BE DRAGONS
 
+![High Level Architecture](assets/screenshots/arch_highlev.png)
+
+![Inference Pipeline Architecture](assets/screenshots/inference_pipeline.png)
 
 ## Demo
 #### HERE BE DRAGONS
@@ -28,7 +29,7 @@
 
 ### Prerequisites
 - Linux machine
-- NVIDIA GPU, min 24GB VRAM, CUDA 12 or higher
+- NVIDIA GPU, min 22Gb VRAM, CUDA 12 or higher
 - Installed docker, docker compose, Nvidia container toolkit (ctk). See [guide.md](assets/docs/docker-docker-compose-ctl.md) to install
 
 1. Clone the repository

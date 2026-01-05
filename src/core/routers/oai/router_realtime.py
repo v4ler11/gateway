@@ -164,7 +164,6 @@ class OAIRealtimeRouter(BaseRouter):
                     ):
                         if interrupt_event.is_set() or processing_turn_id != current_turn_id:
                             interrupted = True
-                            info("[USER INTERRUPTS ASSISTANT]")
                             break
 
                         if isinstance(chunk, bytes):
@@ -196,9 +195,7 @@ class OAIRealtimeRouter(BaseRouter):
                         continue
 
                     await websocket.send_bytes(audio_chunk)
-                    info("SENT AUDIO CHUNK. PACING...")
                     await pace_audio(len(audio_chunk))
-                    info("PACING RELEASED")
 
             except Exception as e:
                 error(f"Error in WS Sender: {e}")
